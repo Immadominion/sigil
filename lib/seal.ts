@@ -87,21 +87,26 @@ export function buildCreateWalletInstruction(
 /**
  * Build a RegisterAgent instruction for the Seal program.
  * Discriminant: 1
- * Data layout (307 bytes total):
- *   [0]    u8       discriminant (1)
- *   [1]    u8       bump (agentConfigPda bump)
- *   [2]    [u8;32]  name (null-padded)
- *   [34]   u64 LE   dailyLimitLamports
- *   [42]   u64 LE   perTxLimitLamports
- *   [50]   u8       allowedPrograms.length
- *   [51]   [Pubkey;8]  allowedPrograms (padded with SystemProgram)
+ *
+ * Data layout (variable length, min 100 bytes with disc):
+ *   [0]    u8         discriminant (1)
+ *   [1]    u8         bump (agentConfigPda bump)
+ *   [2]    [u8;32]    agent_pubkey
+ *   [34]   [u8;32]    name (null-padded)
+ *   [66]   u8         allowed_programs_count
+ *   [67]   [Pubkey;N] allowed_programs (variable)
+ *          u8         allowed_instructions_count
+ *          [[u8;8];M] allowed_instructions (variable)
+ *          u64 LE     dailyLimitLamports
+ *          u64 LE     perTxLimitLamports
+ *          i64 LE     defaultSessionDuration (seconds)
+ *          i64 LE     maxSessionDuration (seconds)
  *
  * Accounts:
  *   0. owner (signer, writable)
  *   1. wallet PDA (writable)
- *   2. agent pubkey (readonly)
- *   3. agentConfigPda (writable)
- *   4. system_program (readonly)
+ *   2. agentConfigPda (writable)
+ *   3. system_program (readonly)
  */
 export function buildRegisterAgentInstruction(params: {
     owner: PublicKey;
@@ -110,6 +115,9 @@ export function buildRegisterAgentInstruction(params: {
     dailyLimitLamports: bigint;
     perTxLimitLamports: bigint;
     allowedPrograms?: PublicKey[];
+    allowedInstructions?: Buffer[];
+    defaultSessionDuration?: bigint;
+    maxSessionDuration?: bigint;
 }): TransactionInstruction {
     const {
         owner,
@@ -118,13 +126,25 @@ export function buildRegisterAgentInstruction(params: {
         dailyLimitLamports,
         perTxLimitLamports,
         allowedPrograms = [],
+        allowedInstructions = [],
+        defaultSessionDuration = BigInt(3600),   // 1 hour
+        maxSessionDuration = BigInt(86400),       // 24 hours
     } = params;
 
     const [walletPda] = deriveWalletPda(owner);
     const [agentConfigPda, bump] = deriveAgentPda(walletPda, agentPubkey);
 
-    // Build instruction data (307 bytes)
-    const data = Buffer.alloc(307);
+    // Variable-length instruction data
+    const dataSize =
+        1 +                                // discriminant
+        1 +                                // bump
+        32 +                               // agent_pubkey
+        32 +                               // name
+        1 + allowedPrograms.length * 32 +  // programs_count + programs
+        1 + allowedInstructions.length * 8 + // instructions_count + instructions
+        8 + 8 + 8 + 8;                     // daily + perTx + defaultDur + maxDur
+
+    const data = Buffer.alloc(dataSize);
     let offset = 0;
 
     // Discriminant
@@ -135,10 +155,30 @@ export function buildRegisterAgentInstruction(params: {
     data.writeUInt8(bump, offset);
     offset += 1;
 
+    // Agent pubkey (32 bytes)
+    agentPubkey.toBuffer().copy(data, offset);
+    offset += 32;
+
     // Name (32 bytes, null-padded)
     const nameBytes = Buffer.from(name, "utf8").subarray(0, 32);
     nameBytes.copy(data, offset);
     offset += 32;
+
+    // Allowed programs count + data
+    data.writeUInt8(allowedPrograms.length, offset);
+    offset += 1;
+    for (const prog of allowedPrograms) {
+        prog.toBuffer().copy(data, offset);
+        offset += 32;
+    }
+
+    // Allowed instructions count + data
+    data.writeUInt8(allowedInstructions.length, offset);
+    offset += 1;
+    for (const ix of allowedInstructions) {
+        ix.copy(data, offset, 0, 8);
+        offset += 8;
+    }
 
     // Daily limit (u64 LE)
     data.writeBigUInt64LE(dailyLimitLamports, offset);
@@ -148,26 +188,18 @@ export function buildRegisterAgentInstruction(params: {
     data.writeBigUInt64LE(perTxLimitLamports, offset);
     offset += 8;
 
-    // Allowed programs count
-    data.writeUInt8(allowedPrograms.length, offset);
-    offset += 1;
+    // Default session duration (i64 LE, seconds)
+    data.writeBigInt64LE(defaultSessionDuration, offset);
+    offset += 8;
 
-    // Allowed programs (8 slots, padded with SystemProgram)
-    for (let i = 0; i < 8; i++) {
-        const prog =
-            i < allowedPrograms.length
-                ? allowedPrograms[i]
-                : SystemProgram.programId;
-        prog.toBuffer().copy(data, offset);
-        offset += 32;
-    }
+    // Max session duration (i64 LE, seconds)
+    data.writeBigInt64LE(maxSessionDuration, offset);
 
     return new TransactionInstruction({
         programId: PROGRAM_ID,
         keys: [
             { pubkey: owner, isSigner: true, isWritable: true },
             { pubkey: walletPda, isSigner: false, isWritable: true },
-            { pubkey: agentPubkey, isSigner: false, isWritable: false },
             { pubkey: agentConfigPda, isSigner: false, isWritable: true },
             { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         ],
@@ -177,7 +209,6 @@ export function buildRegisterAgentInstruction(params: {
 
 /**
  * Build a serialized transaction for RegisterAgent that can be signed by a wallet.
- * Returns the base64-encoded transaction for signing.
  */
 export async function buildRegisterAgentTransaction(params: {
     owner: PublicKey;
@@ -186,6 +217,9 @@ export async function buildRegisterAgentTransaction(params: {
     dailyLimitLamports: bigint;
     perTxLimitLamports: bigint;
     allowedPrograms?: PublicKey[];
+    allowedInstructions?: Buffer[];
+    defaultSessionDuration?: bigint;
+    maxSessionDuration?: bigint;
 }): Promise<Transaction> {
     const { Connection } = await import("@solana/web3.js");
     const connection = new Connection(SOLANA_RPC_URL, "confirmed");
