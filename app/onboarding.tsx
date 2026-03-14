@@ -27,6 +27,7 @@ import { api } from "../lib/api";
 import { buildCreateWalletInstruction, deriveWalletPda } from "../lib/seal";
 import { APP_NAME, SOLANA_CLUSTER, SOLANA_RPC_URL } from "../lib/constants";
 import { getInjectedWebWalletProvider, getWebWalletProviderId } from "../lib/web-wallet";
+import { Lock, Smartphone, Link2, Ghost, ArrowRight, ArrowLeft, ShieldCheck, Zap } from "lucide-react-native";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -55,17 +56,17 @@ interface DetectedWallet {
 
 const FEATURES = [
   {
-    icon: "🔐",
+    icon: <Lock size={20} color="#FF4500" />,
     title: "Scoped Agent Sessions",
     desc: "Grant AI bots limited, time-bound on-chain authority",
   },
   {
-    icon: "📱",
+    icon: <Smartphone size={20} color="#FF4500" />,
     title: "Mobile Control Plane",
     desc: "Approve, monitor, and revoke from anywhere",
   },
   {
-    icon: "🌐",
+    icon: <Link2 size={20} color="#FF4500" />,
     title: "Universal Pairing",
     desc: "One token connects any agent across any platform",
   },
@@ -448,26 +449,20 @@ export default function Onboarding() {
   // ══════════════════════════════════════════════════════════════
   if (step === "welcome") {
     return (
-      <View style={{ flex: 1, backgroundColor: "#0d1117" }}>
+      <View style={{ flex: 1, backgroundColor: "#050505" }}>
         <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
           <View style={{
             flex: 1, alignItems: "center", justifyContent: "center",
-            paddingHorizontal: 32, paddingTop: 80, paddingBottom: 24,
+            paddingHorizontal: 24, paddingTop: 80, paddingBottom: 24,
           }}>
-            {/* Logo mark */}
-            <View style={{
-              width: 96, height: 96, borderRadius: 28,
-              backgroundColor: "rgba(88,166,255,0.1)",
-              borderWidth: 1, borderColor: "rgba(88,166,255,0.25)",
-              alignItems: "center", justifyContent: "center", marginBottom: 28,
-            }}>
-              <Text style={{ fontSize: 52, lineHeight: 60 }}>⬡</Text>
-            </View>
 
-            <Text style={{ fontSize: 38, fontWeight: "800", color: "#fff", letterSpacing: -1, marginBottom: 10 }}>
-              {APP_NAME}
+            <Text style={{
+              fontSize: 38, fontWeight: "800", color: "#F5F5F5",
+              letterSpacing: -1, marginBottom: 10, fontFamily: Platform.select({ ios: "Baskerville", android: "serif", web: "'Playfair Display', Georgia, serif" })
+            }}>
+              SIGIL
             </Text>
-            <Text style={{ fontSize: 16, color: "#8b949e", textAlign: "center", marginBottom: 52, lineHeight: 24 }}>
+            <Text style={{ fontSize: 16, color: "#888888", textAlign: "center", marginBottom: 48, lineHeight: 24 }}>
               The smart wallet for{"\n"}autonomous AI agents
             </Text>
 
@@ -477,22 +472,23 @@ export default function Onboarding() {
                 <View
                   key={i}
                   style={{
-                    flexDirection: "row", alignItems: "flex-start", gap: 14,
-                    marginBottom: i < FEATURES.length - 1 ? 22 : 0,
+                    backgroundColor: "#111111", borderRadius: 12, padding: 16,
+                    flexDirection: "row", alignItems: "center", gap: 16,
+                    marginBottom: 12, borderWidth: 1, borderColor: "#222222"
                   }}
                 >
                   <View style={{
-                    width: 40, height: 40, borderRadius: 6,
-                    backgroundColor: "rgba(88,166,255,0.1)",
+                    width: 44, height: 44, borderRadius: 10,
+                    backgroundColor: "rgba(255,69,0,0.1)",
                     alignItems: "center", justifyContent: "center", flexShrink: 0,
                   }}>
-                    <Text style={{ fontSize: 18 }}>{f.icon}</Text>
+                    {f.icon}
                   </View>
-                  <View style={{ flex: 1, paddingTop: 2 }}>
-                    <Text style={{ color: "#e6edf3", fontWeight: "600", fontSize: 14, marginBottom: 3 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: "#F5F5F5", fontWeight: "600", fontSize: 15, marginBottom: 4 }}>
                       {f.title}
                     </Text>
-                    <Text style={{ color: "#8b949e", fontSize: 12, lineHeight: 18 }}>{f.desc}</Text>
+                    <Text style={{ color: "#888888", fontSize: 13, lineHeight: 18 }}>{f.desc}</Text>
                   </View>
                 </View>
               ))}
@@ -501,15 +497,19 @@ export default function Onboarding() {
         </ScrollView>
 
         {/* Sticky CTA */}
-        <View style={{ paddingHorizontal: 24, paddingBottom: 48, paddingTop: 12 }}>
+        <View style={{ width: "100%", maxWidth: 360, paddingHorizontal: 24, paddingBottom: Platform.OS === 'ios' ? 48 : 24, paddingTop: 12, alignSelf: "center" }}>
           <Pressable
             onPress={() => { setError(null); setStep("connect"); }}
-            style={{ backgroundColor: "#58a6ff", borderRadius: 6, paddingVertical: 16, alignItems: "center" }}
+            style={{
+              backgroundColor: "#FF4500", borderRadius: 12, paddingVertical: 16,
+              alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8
+            }}
           >
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>Get Started</Text>
+            <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>Get Started</Text>
+            <ArrowRight size={18} color="#FFF" />
           </Pressable>
-          <Text style={{ color: "#484f58", fontSize: 11, textAlign: "center", marginTop: 12 }}>
-            Solana {SOLANA_CLUSTER} · Non-custodial
+          <Text style={{ color: "#444444", fontSize: 12, textAlign: "center", marginTop: 16 }}>
+            Solana {SOLANA_CLUSTER}
           </Text>
         </View>
       </View>
@@ -521,43 +521,43 @@ export default function Onboarding() {
   // ══════════════════════════════════════════════════════════════
   if (step === "connect") {
     return (
-      <View style={{ flex: 1, backgroundColor: "#0d1117" }}>
+      <View style={{ flex: 1, backgroundColor: "#050505", maxWidth: 360, width: "100%", alignSelf: "center", marginTop: Platform.OS === 'ios' ? 60 : 100, }}>
         {/* Header */}
         <View style={{
           flexDirection: "row", alignItems: "center",
-          paddingHorizontal: 24, paddingTop: 64, paddingBottom: 8, gap: 12,
+          paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom: 16, gap: 12,
         }}>
           <Pressable
             onPress={() => { setStep("welcome"); setError(null); setConnecting(false); }}
-            style={{ padding: 8 }}
+            style={{ padding: 8, backgroundColor: "#111111", borderRadius: 8, borderWidth: 1, borderColor: "#222222" }}
           >
-            <Text style={{ color: "#8b949e", fontSize: 22, lineHeight: 28 }}>←</Text>
+            <ArrowLeft size={20} color="#F5F5F5" />
           </Pressable>
-          <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700" }}>Connect Wallet</Text>
+          <Text style={{ color: "#F5F5F5", fontSize: 20, fontWeight: "700" }}>Connect Wallet</Text>
         </View>
 
         <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 16 }}>
           {Platform.OS === "web" ? (
             <View>
               {wallets.length === 0 ? (
-                <View style={{ paddingVertical: 48, alignItems: "center" }}>
-                  <Text style={{ fontSize: 52, marginBottom: 16 }}>👻</Text>
-                  <Text style={{ color: "#e6edf3", fontSize: 16, fontWeight: "600", marginBottom: 8, textAlign: "center" }}>
+                <View style={{ paddingVertical: 48, alignItems: "center", backgroundColor: "#111111", borderRadius: 16, borderWidth: 1, borderColor: "#222222" }}>
+                  <Ghost size={48} color="#444444" style={{ marginBottom: 16 }} />
+                  <Text style={{ color: "#F5F5F5", fontSize: 16, fontWeight: "600", marginBottom: 8, textAlign: "center" }}>
                     No wallets detected
                   </Text>
-                  <Text style={{ color: "#8b949e", fontSize: 13, textAlign: "center", lineHeight: 20, marginBottom: 24 }}>
+                  <Text style={{ color: "#888888", fontSize: 13, textAlign: "center", lineHeight: 20, marginBottom: 24 }}>
                     Install a Solana wallet extension{"\n"}like Phantom to continue.
                   </Text>
                   <Pressable
                     onPress={() => (window as any).open("https://phantom.app", "_blank")}
-                    style={{ paddingHorizontal: 24, paddingVertical: 12, borderRadius: 6, borderWidth: 1, borderColor: "#58a6ff" }}
+                    style={{ paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: "#FF4500", backgroundColor: "rgba(255,69,0,0.1)" }}
                   >
-                    <Text style={{ color: "#58a6ff", fontWeight: "600" }}>Get Phantom →</Text>
+                    <Text style={{ color: "#FF4500", fontWeight: "600" }}>Get Phantom →</Text>
                   </Pressable>
                 </View>
               ) : (
                 <View style={{ gap: 10 }}>
-                  <Text style={{ color: "#6e7681", fontSize: 12, marginBottom: 6 }}>
+                  <Text style={{ color: "#888888", fontSize: 12, marginBottom: 6, fontWeight: "600", textTransform: "uppercase" }}>
                     {wallets.length} wallet{wallets.length > 1 ? "s" : ""} available
                   </Text>
                   {wallets.map((w) => (
@@ -566,31 +566,31 @@ export default function Onboarding() {
                       onPress={() => !connecting && handleConnectWebWallet(w)}
                       style={{
                         flexDirection: "row", alignItems: "center", gap: 14,
-                        padding: 16, backgroundColor: "#161b22", borderRadius: 6,
-                        borderWidth: 1, borderColor: "#30363d",
+                        padding: 16, backgroundColor: "#111111", borderRadius: 12,
+                        borderWidth: 1, borderColor: "#222222",
                         opacity: connecting ? 0.6 : 1,
                       }}
                     >
                       {w.icon ? (
-                        <Image source={{ uri: w.icon }} style={{ width: 48, height: 48, borderRadius: 6 }} />
+                        <Image source={{ uri: w.icon }} style={{ width: 44, height: 44, borderRadius: 10 }} />
                       ) : (
                         <View style={{
-                          width: 48, height: 48, borderRadius: 6,
-                          backgroundColor: "#30363d", alignItems: "center", justifyContent: "center",
+                          width: 44, height: 44, borderRadius: 10,
+                          backgroundColor: "#222222", alignItems: "center", justifyContent: "center",
                         }}>
-                          <Text style={{ color: "#8b949e", fontWeight: "700", fontSize: 14 }}>
+                          <Text style={{ color: "#F5F5F5", fontWeight: "700", fontSize: 14 }}>
                             {w.name.slice(0, 2).toUpperCase()}
                           </Text>
                         </View>
                       )}
                       <View style={{ flex: 1 }}>
-                        <Text style={{ color: "#fff", fontWeight: "600", fontSize: 16 }}>{w.name}</Text>
-                        <Text style={{ color: "#8b949e", fontSize: 12, marginTop: 2 }}>Tap to connect</Text>
+                        <Text style={{ color: "#F5F5F5", fontWeight: "600", fontSize: 16 }}>{w.name}</Text>
+                        <Text style={{ color: "#888888", fontSize: 13, marginTop: 2 }}>Tap to connect</Text>
                       </View>
                       {connecting ? (
-                        <ActivityIndicator size="small" color="#58a6ff" />
+                        <ActivityIndicator size="small" color="#FF4500" />
                       ) : (
-                        <Text style={{ color: "#6e7681", fontSize: 20, lineHeight: 24 }}>›</Text>
+                        <ArrowRight size={20} color="#444444" />
                       )}
                     </Pressable>
                   ))}
@@ -599,7 +599,7 @@ export default function Onboarding() {
             </View>
           ) : Platform.OS === "ios" ? (
             <View style={{ gap: 12 }}>
-              <Text style={{ color: "#8b949e", fontSize: 13, lineHeight: 20, marginBottom: 8 }}>
+              <Text style={{ color: "#888888", fontSize: 13, lineHeight: 20, marginBottom: 8 }}>
                 Connect securely via Phantom. You'll be redirected to approve.
               </Text>
               <Pressable
@@ -607,32 +607,32 @@ export default function Onboarding() {
                 disabled={connecting}
                 style={{
                   flexDirection: "row", alignItems: "center", gap: 14, padding: 16,
-                  backgroundColor: "#161b22", borderRadius: 6,
-                  borderWidth: 1, borderColor: "#30363d",
+                  backgroundColor: "#111111", borderRadius: 12,
+                  borderWidth: 1, borderColor: "#222222",
                   opacity: connecting ? 0.6 : 1,
                 }}
               >
                 <View style={{
-                  width: 48, height: 48, borderRadius: 6,
+                  width: 44, height: 44, borderRadius: 10,
                   backgroundColor: "#AB9FF2", alignItems: "center", justifyContent: "center",
                 }}>
-                  <Text style={{ fontSize: 24 }}>👻</Text>
+                  <Ghost size={24} color="#FFF" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: "#fff", fontWeight: "600", fontSize: 16 }}>Phantom</Text>
-                  <Text style={{ color: "#8b949e", fontSize: 12, marginTop: 2 }}>Opens Phantom app</Text>
+                  <Text style={{ color: "#F5F5F5", fontWeight: "600", fontSize: 16 }}>Phantom</Text>
+                  <Text style={{ color: "#888888", fontSize: 13, marginTop: 2 }}>Opens Phantom app</Text>
                 </View>
                 {connecting ? (
-                  <ActivityIndicator size="small" color="#58a6ff" />
+                  <ActivityIndicator size="small" color="#FF4500" />
                 ) : (
-                  <Text style={{ color: "#6e7681", fontSize: 20, lineHeight: 24 }}>›</Text>
+                  <ArrowRight size={20} color="#444444" />
                 )}
               </Pressable>
             </View>
           ) : (
             // Android
             <View style={{ gap: 12 }}>
-              <Text style={{ color: "#8b949e", fontSize: 13, marginBottom: 8 }}>
+              <Text style={{ color: "#888888", fontSize: 13, marginBottom: 12, lineHeight: 20 }}>
                 Connect via Mobile Wallet Adapter (Phantom, Solflare, etc.)
               </Text>
               <Pressable
@@ -640,12 +640,12 @@ export default function Onboarding() {
                 disabled={connecting}
                 style={{
                   flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10,
-                  padding: 16, backgroundColor: "#58a6ff", borderRadius: 6,
+                  padding: 16, backgroundColor: "#FF4500", borderRadius: 12,
                   opacity: connecting ? 0.6 : 1,
                 }}
               >
-                {connecting && <ActivityIndicator size="small" color="#fff" />}
-                <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+                {connecting ? <ActivityIndicator size="small" color="#FFF" /> : <Ghost size={20} color="#FFF" />}
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
                   {connecting ? "Connecting..." : "Connect Wallet"}
                 </Text>
               </Pressable>
@@ -654,11 +654,11 @@ export default function Onboarding() {
 
           {error && (
             <View style={{
-              marginTop: 16, padding: 14, borderRadius: 6,
-              backgroundColor: "rgba(248,81,73,0.08)",
-              borderWidth: 1, borderColor: "rgba(248,81,73,0.25)",
+              marginTop: 16, padding: 16, borderRadius: 12,
+              backgroundColor: "rgba(248,81,73,0.1)",
+              borderWidth: 1, borderColor: "rgba(248,81,73,0.3)",
             }}>
-              <Text style={{ color: "#F87171", fontSize: 13, lineHeight: 20 }}>{error}</Text>
+              <Text style={{ color: "#f85149", fontSize: 13, lineHeight: 20 }}>{error}</Text>
             </View>
           )}
         </View>
@@ -674,49 +674,51 @@ export default function Onboarding() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#0d1117" }}
+      style={{ flex: 1, backgroundColor: "#050505" }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
-        <View style={{ paddingHorizontal: 24, paddingTop: 72, paddingBottom: 48 }}>
+        <View style={{ paddingHorizontal: 24, paddingTop: Platform.OS === 'ios' ? 72 : 32, paddingBottom: 48 }}>
           {/* Success badge */}
           <View style={{ alignItems: "center", marginBottom: 36 }}>
             <View style={{
               width: 64, height: 64, borderRadius: 32,
-              backgroundColor: "rgba(63,185,80,0.12)",
-              borderWidth: 1, borderColor: "rgba(63,185,80,0.3)",
+              backgroundColor: "rgba(63,185,80,0.1)",
+              borderWidth: 1, borderColor: "rgba(63,185,80,0.25)",
               alignItems: "center", justifyContent: "center", marginBottom: 16,
             }}>
-              <Text style={{ fontSize: 26 }}>✓</Text>
+              <ShieldCheck size={32} color="#3fb950" />
             </View>
-            <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700", marginBottom: 6 }}>
+            <Text style={{ color: "#F5F5F5", fontSize: 22, fontWeight: "700", marginBottom: 6 }}>
               Wallet Connected
             </Text>
             {connected && (
-              <Text style={{ color: "#6e7681", fontSize: 13, fontFamily: "SpaceMono" }}>
+              <Text style={{ color: "#888888", fontSize: 13, fontFamily: "SpaceMono" }}>
                 {connected.walletAddress.slice(0, 6)}...{connected.walletAddress.slice(-4)}
               </Text>
             )}
             {walletBalance !== null && (
-              <Text style={{ color: "#8b949e", fontSize: 12, marginTop: 4 }}>
-                Balance: {walletBalance.toFixed(4)} SOL
-              </Text>
+              <View style={{ marginTop: 8, backgroundColor: "#111111", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: "#222222" }}>
+                <Text style={{ color: "#F5F5F5", fontSize: 13, fontWeight: "600" }}>
+                  {walletBalance.toFixed(4)} <Text style={{ color: "#888888", fontWeight: "400" }}>SOL</Text>
+                </Text>
+              </View>
             )}
           </View>
 
           {/* Devnet airdrop (only visible on devnet) */}
           {SOLANA_CLUSTER === "devnet" && (
             <View style={{
-              backgroundColor: "rgba(210,153,34,0.08)", borderRadius: 6,
-              borderWidth: 1, borderColor: "rgba(210,153,34,0.25)",
-              padding: 16, marginBottom: 16,
+              backgroundColor: "rgba(255,69,0,0.08)", borderRadius: 12,
+              borderWidth: 1, borderColor: "rgba(255,69,0,0.25)",
+              padding: 16, marginBottom: 20,
             }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: "#d29922", fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  <Text style={{ color: "#FF4500", fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 }}>
                     Devnet Mode
                   </Text>
-                  <Text style={{ color: "#8b949e", fontSize: 12, marginTop: 4, lineHeight: 18 }}>
+                  <Text style={{ color: "#888888", fontSize: 12, marginTop: 4, lineHeight: 18 }}>
                     {walletBalance !== null && walletBalance < 0.01
                       ? "Your wallet needs SOL to create the on-chain account."
                       : "Request free test SOL if you need more."}
@@ -726,16 +728,20 @@ export default function Onboarding() {
                   onPress={handleAirdrop}
                   disabled={airdropping}
                   style={{
-                    backgroundColor: airdropping ? "rgba(210,153,34,0.15)" : "rgba(210,153,34,0.2)",
-                    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 6, marginLeft: 12,
+                    backgroundColor: airdropping ? "rgba(255,69,0,0.1)" : "rgba(255,69,0,0.2)",
+                    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, marginLeft: 12,
+                    flexDirection: "row", alignItems: "center", gap: 6,
                   }}
                 >
                   {airdropping ? (
-                    <ActivityIndicator size="small" color="#d29922" />
+                    <ActivityIndicator size="small" color="#FF4500" />
                   ) : (
-                    <Text style={{ color: "#d29922", fontWeight: "700", fontSize: 13 }}>
-                      Airdrop 2 SOL
-                    </Text>
+                    <>
+                      <Zap size={14} color="#FF4500" />
+                      <Text style={{ color: "#FF4500", fontWeight: "700", fontSize: 13 }}>
+                        Airdrop
+                      </Text>
+                    </>
                   )}
                 </Pressable>
               </View>
@@ -744,38 +750,38 @@ export default function Onboarding() {
 
           {/* Initialize card */}
           <View style={{
-            backgroundColor: "#161b22", borderRadius: 6,
-            borderWidth: 1, borderColor: "#30363d",
-            padding: 22, marginBottom: 16,
+            backgroundColor: "#111111", borderRadius: 16,
+            borderWidth: 1, borderColor: "#222222",
+            padding: 24, marginBottom: 20,
           }}>
-            <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700", marginBottom: 6 }}>
+            <Text style={{ color: "#F5F5F5", fontSize: 18, fontWeight: "700", marginBottom: 6 }}>
               Create Seal Wallet
             </Text>
-            <Text style={{ color: "#8b949e", fontSize: 13, lineHeight: 20, marginBottom: 24 }}>
+            <Text style={{ color: "#888888", fontSize: 13, lineHeight: 20, marginBottom: 24 }}>
               Your on-chain smart account that enforces agent permissions, spending limits, and time-bounds.
             </Text>
 
-            <Text style={{ color: "#484f58", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
+            <Text style={{ color: "#888888", fontSize: 11, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
               Initial Deposit (optional)
             </Text>
 
             {/* Amount input */}
             <View style={{
               flexDirection: "row", alignItems: "center",
-              backgroundColor: "#0d1117",
-              borderRadius: 6, borderWidth: 1, borderColor: "#30363d", marginBottom: 6,
+              backgroundColor: "#0A0A0A",
+              borderRadius: 10, borderWidth: 1, borderColor: "#222222", marginBottom: 8,
             }}>
               <TextInput
                 value={depositSol}
                 onChangeText={setDepositSol}
                 keyboardType="decimal-pad"
                 placeholder="0.1"
-                placeholderTextColor="#30363d"
-                style={{ flex: 1, color: "#fff", paddingHorizontal: 16, paddingVertical: 14, fontSize: 18, fontWeight: "600" }}
+                placeholderTextColor="#444444"
+                style={{ flex: 1, color: "#F5F5F5", paddingHorizontal: 16, paddingVertical: 14, fontSize: 18, fontWeight: "700", fontFamily: "SpaceMono" }}
               />
-              <Text style={{ color: "#6e7681", paddingRight: 16, fontWeight: "600", fontSize: 14 }}>SOL</Text>
+              <Text style={{ color: "#888888", paddingRight: 16, fontWeight: "600", fontSize: 14 }}>SOL</Text>
             </View>
-            <Text style={{ color: "#484f58", fontSize: 11, marginBottom: 18 }}>
+            <Text style={{ color: "#666666", fontSize: 12, marginBottom: 20 }}>
               + ~0.001 SOL network fee
             </Text>
 
@@ -788,13 +794,13 @@ export default function Onboarding() {
                     key={amt}
                     onPress={() => setDepositSol(amt)}
                     style={{
-                      flex: 1, paddingVertical: 9, borderRadius: 6, alignItems: "center",
+                      flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center",
                       borderWidth: 1,
-                      borderColor: active ? "#58a6ff" : "#30363d",
-                      backgroundColor: active ? "rgba(88,166,255,0.1)" : "transparent",
+                      borderColor: active ? "#FF4500" : "#222222",
+                      backgroundColor: active ? "rgba(255,69,0,0.1)" : "#0A0A0A",
                     }}
                   >
-                    <Text style={{ color: active ? "#58a6ff" : "#6e7681", fontSize: 12, fontWeight: "600" }}>
+                    <Text style={{ color: active ? "#FF4500" : "#888888", fontSize: 13, fontWeight: "600" }}>
                       {amt}
                     </Text>
                   </Pressable>
@@ -808,17 +814,17 @@ export default function Onboarding() {
             onPress={() => handleInitialize(false)}
             disabled={initializing}
             style={{
-              borderRadius: 6, paddingVertical: 16, alignItems: "center", marginBottom: 12,
-              backgroundColor: initializing ? "rgba(88,166,255,0.4)" : "#58a6ff",
+              borderRadius: 12, paddingVertical: 16, alignItems: "center", marginBottom: 16,
+              backgroundColor: initializing ? "#333333" : "#FF4500",
             }}
           >
             {initializing ? (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <ActivityIndicator size="small" color="#fff" />
-                <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>Creating Wallet...</Text>
+                <ActivityIndicator size="small" color="#FFF" />
+                <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>Creating Wallet...</Text>
               </View>
             ) : (
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>
+              <Text style={{ color: "#FFF", fontWeight: "700", fontSize: 16 }}>
                 {depositAmount > 0
                   ? `Create Wallet + Deposit ${depositAmount} SOL`
                   : "Create Wallet"}
@@ -832,18 +838,18 @@ export default function Onboarding() {
             disabled={initializing}
             style={{ paddingVertical: 12, alignItems: "center" }}
           >
-            <Text style={{ color: "#6e7681", fontSize: 13 }}>
+            <Text style={{ color: "#888888", fontSize: 13, fontWeight: "600" }}>
               Skip deposit, create wallet only
             </Text>
           </Pressable>
 
           {error && (
             <View style={{
-              marginTop: 16, padding: 14, borderRadius: 6,
-              backgroundColor: "rgba(248,81,73,0.08)",
-              borderWidth: 1, borderColor: "rgba(248,81,73,0.25)",
+              marginTop: 20, padding: 16, borderRadius: 12,
+              backgroundColor: "rgba(248,81,73,0.1)",
+              borderWidth: 1, borderColor: "rgba(248,81,73,0.3)",
             }}>
-              <Text style={{ color: "#F87171", fontSize: 13, lineHeight: 20 }}>{error}</Text>
+              <Text style={{ color: "#f85149", fontSize: 13, lineHeight: 20 }}>{error}</Text>
             </View>
           )}
         </View>

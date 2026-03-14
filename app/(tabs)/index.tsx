@@ -8,13 +8,19 @@ import {
   Platform,
   Alert,
   Image,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  ActivityIndicator,
 } from "react-native";
-import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Connection, PublicKey, LAMPORTS_PER_SOL, Transaction } from "@solana/web3.js";
+import { Buffer } from "buffer";
 import { SOLANA_RPC_URL } from "../../lib/constants";
 import { useRouter } from "expo-router";
 import * as Clipboard from "expo-clipboard";
-import { Shield, ShieldAlert, ShieldCheck, Unlink, Lock, Unlock, Copy, Download, Bot, Activity, ArrowRight, Wallet } from "lucide-react-native";
+import { ShieldAlert, Unlink, Lock, Unlock, Copy, ArrowUpRight, Bot, ArrowRight, X } from "lucide-react-native";
 import { useAuthStore } from "../../stores/auth";
+import { getInjectedWebWalletProvider } from "../../lib/web-wallet";
 import { api, type Agent, type PendingApproval, type ActivityItem } from "../../lib/api";
 
 const ACTIVITY_COLORS: Record<string, string> = {
@@ -28,7 +34,7 @@ const ACTIVITY_COLORS: Record<string, string> = {
 };
 
 export default function Dashboard() {
-  const { walletAddress, sealWalletAddress, token, logout } = useAuthStore();
+  const { walletAddress, sealWalletAddress, token, logout, walletProviderId } = useAuthStore();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [walletInfo, setWalletInfo] = useState<{
@@ -40,6 +46,10 @@ export default function Dashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [togglingLock, setTogglingLock] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
+  const [withdrawMax, setWithdrawMax] = useState(false);
   const router = useRouter();
 
   const loadData = useCallback(async () => {
@@ -81,6 +91,59 @@ export default function Dashboard() {
   const activeAgents = agents.filter((a) => a.status === "active").length;
 
   const short = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+
+  const handleWithdraw = async () => {
+    const amountSol = withdrawMax ? 0 : parseFloat(withdrawAmount);
+    if (!withdrawMax && (isNaN(amountSol) || amountSol <= 0)) {
+      const msg = "Please enter a valid amount.";
+      Platform.OS === "web" ? window.alert(msg) : Alert.alert("Invalid", msg);
+      return;
+    }
+    setWithdrawing(true);
+    try {
+      const result = await api.withdraw({ amountSol: withdrawMax ? 0 : amountSol });
+
+      if (result.closesWallet) {
+        const confirmMsg = `This will withdraw ALL ${result.totalAvailableSol} SOL and close your wallet PDA. Continue?`;
+        const confirmed = Platform.OS === "web"
+          ? window.confirm(confirmMsg)
+          : await new Promise<boolean>((resolve) =>
+            Alert.alert("Close Wallet?", confirmMsg, [
+              { text: "Cancel", onPress: () => resolve(false), style: "cancel" },
+              { text: "Withdraw All", onPress: () => resolve(true), style: "destructive" },
+            ])
+          );
+        if (!confirmed) { setWithdrawing(false); return; }
+      }
+
+      // Sign the partially-signed TX with the user's wallet
+      if (Platform.OS === "web") {
+        const provider = getInjectedWebWalletProvider(walletProviderId);
+        if (!provider) throw new Error("Wallet not connected. Please reconnect.");
+        if (!provider.isConnected) await provider.connect();
+        const txBytes = Buffer.from(result.transaction, "base64");
+        const tx = Transaction.from(txBytes);
+        const { signature } = await provider.signAndSendTransaction(tx);
+        const sig = typeof signature === "string" ? signature : signature.toString();
+        const msg = `Withdrew ${result.withdrawSol} SOL`;
+        window.alert(msg);
+      } else {
+        // Native: submit via backend
+        await api.submitSigned({ transaction: result.transaction });
+        Alert.alert("Success", `Withdrew ${result.withdrawSol} SOL`);
+      }
+
+      setShowWithdraw(false);
+      setWithdrawAmount("");
+      setWithdrawMax(false);
+      await loadData();
+    } catch (err: any) {
+      const msg = err?.message ?? "Withdraw failed";
+      Platform.OS === "web" ? window.alert(msg) : Alert.alert("Error", msg);
+    } finally {
+      setWithdrawing(false);
+    }
+  };
 
   const copyToClipboard = async (text: string, type: string) => {
     await Clipboard.setStringAsync(text);
@@ -174,7 +237,7 @@ export default function Dashboard() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#050505", alignItems: "center" }}>
-      <View style={{ width: "100%", maxWidth: 640, flex: 1 }}>
+      <View style={{ width: "100%", maxWidth: 640, flex: 1, marginTop: Platform.OS === 'ios' ? 60 : 100 }}>
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 40 }}
@@ -186,9 +249,9 @@ export default function Dashboard() {
             flexDirection: "row", alignItems: "center", justifyContent: "space-between",
             paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom: 20,
           }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Image source={require("../../assets/images/logo.png")} style={{ width: 28, height: 28 }} resizeMode="contain" />
-              <Text style={{ color: "#F5F5F5", fontSize: 22, fontWeight: "400", letterSpacing: 1, fontFamily: Platform.OS === "ios" ? "Georgia" : "serif" }}>Sigil</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Image source={require("../../assets/images/logo.png")} style={{ width: 30, height: 30, borderRadius: 6 }} resizeMode="contain" />
+              <Text style={{ color: "#F5F5F5", fontSize: 22, fontWeight: "300", letterSpacing: 2, fontFamily: Platform.select({ ios: "Baskerville", android: "serif", web: "'Playfair Display', Georgia, serif" }) }}>SIGIL</Text>
             </View>
             <Pressable
               onPress={logout}
@@ -247,17 +310,14 @@ export default function Dashboard() {
                 </Pressable>
 
                 <Pressable
-                  onPress={() => {
-                    sealWalletAddress && copyToClipboard(sealWalletAddress, "Address");
-                    Alert.alert("Funding", "Please send SOL directly to your copied Smart Wallet PDA to fund your agents.");
-                  }}
+                  onPress={() => setShowWithdraw(true)}
                   style={{
                     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
                     backgroundColor: "#FFFFFF", borderRadius: 8, paddingVertical: 12
                   }}
                 >
-                  <Download size={16} color="#FF4500" />
-                  <Text style={{ color: "#FF4500", fontSize: 14, fontWeight: "600" }}>Fund Wallet</Text>
+                  <ArrowUpRight size={16} color="#FF4500" />
+                  <Text style={{ color: "#FF4500", fontSize: 14, fontWeight: "600" }}>Withdraw</Text>
                 </Pressable>
               </View>
             </View>
@@ -354,6 +414,130 @@ export default function Dashboard() {
 
           </View>
         </ScrollView>
+
+        {/* Withdraw Modal */}
+        <Modal
+          visible={showWithdraw}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowWithdraw(false)}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.6)" }}
+          >
+            <Pressable style={{ flex: 1 }} onPress={() => setShowWithdraw(false)} />
+            <View style={{
+              backgroundColor: "#111111", borderTopLeftRadius: 24, borderTopRightRadius: 24,
+              padding: 24, paddingBottom: Platform.OS === "ios" ? 44 : 24,
+              maxWidth: 640, width: "100%", alignSelf: "center",
+            }}>
+              {/* Modal Header */}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <Text style={{ color: "#F5F5F5", fontSize: 20, fontWeight: "700" }}>Withdraw SOL</Text>
+                <Pressable onPress={() => setShowWithdraw(false)} style={{ padding: 4 }}>
+                  <X size={22} color="#888888" />
+                </Pressable>
+              </View>
+
+              {/* Balance Display */}
+              <View style={{ backgroundColor: "#0A0A0A", borderRadius: 12, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: "#222222" }}>
+                <Text style={{ color: "#888888", fontSize: 12, fontWeight: "600", marginBottom: 4 }}>AVAILABLE BALANCE</Text>
+                <Text style={{ color: "#F5F5F5", fontSize: 28, fontWeight: "800" }}>
+                  {balance.toFixed(4)} <Text style={{ fontSize: 14, color: "#888888" }}>SOL</Text>
+                </Text>
+              </View>
+
+              {/* Amount Input */}
+              <View style={{ marginBottom: 16 }}>
+                <Text style={{ color: "#888888", fontSize: 12, fontWeight: "600", marginBottom: 8 }}>AMOUNT</Text>
+                <View style={{
+                  flexDirection: "row", alignItems: "center",
+                  backgroundColor: "#0A0A0A", borderRadius: 10,
+                  borderWidth: 1, borderColor: withdrawMax ? "#FF4500" : "#222222",
+                  paddingHorizontal: 16,
+                }}>
+                  <TextInput
+                    style={{
+                      flex: 1, color: withdrawMax ? "#888888" : "#F5F5F5", fontSize: 20, fontWeight: "700",
+                      paddingVertical: 14, fontFamily: "SpaceMono",
+                    }}
+                    placeholder="0.00"
+                    placeholderTextColor="#444444"
+                    keyboardType="decimal-pad"
+                    value={withdrawMax ? balance.toFixed(4) : withdrawAmount}
+                    onChangeText={(t) => { setWithdrawMax(false); setWithdrawAmount(t); }}
+                    editable={!withdrawMax && !withdrawing}
+                  />
+                  <Text style={{ color: "#888888", fontSize: 14, fontWeight: "600", marginLeft: 8 }}>SOL</Text>
+                </View>
+              </View>
+
+              {/* Quick Amount Buttons */}
+              <View style={{ flexDirection: "row", gap: 8, marginBottom: 24 }}>
+                {[25, 50, 75].map((pct) => (
+                  <Pressable
+                    key={pct}
+                    onPress={() => {
+                      setWithdrawMax(false);
+                      setWithdrawAmount((balance * pct / 100).toFixed(4));
+                    }}
+                    style={{
+                      flex: 1, paddingVertical: 10, borderRadius: 8,
+                      backgroundColor: "#0A0A0A", borderWidth: 1, borderColor: "#222222",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: "#888888", fontSize: 13, fontWeight: "600" }}>{pct}%</Text>
+                  </Pressable>
+                ))}
+                <Pressable
+                  onPress={() => { setWithdrawMax(true); setWithdrawAmount(""); }}
+                  style={{
+                    flex: 1, paddingVertical: 10, borderRadius: 8,
+                    backgroundColor: withdrawMax ? "rgba(255,69,0,0.1)" : "#0A0A0A",
+                    borderWidth: 1, borderColor: withdrawMax ? "#FF4500" : "#222222",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: withdrawMax ? "#FF4500" : "#888888", fontSize: 13, fontWeight: "700" }}>MAX</Text>
+                </Pressable>
+              </View>
+
+              {/* Withdraw All Warning */}
+              {withdrawMax && (
+                <View style={{
+                  backgroundColor: "rgba(255,69,0,0.08)", borderRadius: 8, padding: 12, marginBottom: 16,
+                  borderWidth: 1, borderColor: "rgba(255,69,0,0.2)",
+                }}>
+                  <Text style={{ color: "#FF4500", fontSize: 12, lineHeight: 18 }}>
+                    Withdrawing MAX will close your wallet PDA and deregister all agents. You can recreate them later.
+                  </Text>
+                </View>
+              )}
+
+              {/* Confirm Button */}
+              <Pressable
+                onPress={handleWithdraw}
+                disabled={withdrawing || (!withdrawMax && !withdrawAmount)}
+                style={{
+                  backgroundColor: withdrawing || (!withdrawMax && !withdrawAmount) ? "#333333" : "#FF4500",
+                  borderRadius: 10, paddingVertical: 16, alignItems: "center",
+                  flexDirection: "row", justifyContent: "center", gap: 8,
+                }}
+              >
+                {withdrawing ? (
+                  <ActivityIndicator size="small" color="#FFF" />
+                ) : (
+                  <ArrowUpRight size={18} color="#FFF" />
+                )}
+                <Text style={{ color: "#FFF", fontSize: 16, fontWeight: "700" }}>
+                  {withdrawing ? "Processing..." : (withdrawMax ? "Withdraw All" : "Withdraw")}
+                </Text>
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </View>
     </View>
   );

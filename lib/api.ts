@@ -79,20 +79,37 @@ class ApiClient {
   }
 
 
-  async withdraw(data: { amountSol?: number; botIds?: string[] }) {
-    return this.request<{ success: boolean; txSignature: string; withdrawSol: number }>(
-      "/api/wallet/withdraw",
-      {
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+  async withdraw(data: { amountSol?: number }) {
+    return this.request<{
+      success: boolean;
+      transaction: string;
+      network: string;
+      withdrawSol: number;
+      totalAvailableSol: number;
+      walletPdaSol: number;
+      closesWallet: boolean;
+      details: { agent: string; sol: number }[];
+      blockhash: string;
+      lastValidBlockHeight: number;
+    }>("/api/wallet/withdraw", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 
+  async getBalance() {
+    return this.request<{
+      success: boolean;
+      lamports: number;
+      sol: number;
+      walletLamports: number;
+      sessionLamports: number;
+    }>("/api/wallet/balance");
+  }
 
-  async withdraw(data: { amountSol?: number; botIds?: string[] }) {
-    return this.request<{ success: boolean; txSignature: string; withdrawSol: number }>(
-      "/api/wallet/withdraw",
+  async submitSigned(data: { transaction: string; setupLiveBotId?: string; recoverWalletClose?: boolean }) {
+    return this.request<{ success: boolean; signature: string }>(
+      "/api/wallet/submit-signed",
       {
         method: "POST",
         body: JSON.stringify(data),

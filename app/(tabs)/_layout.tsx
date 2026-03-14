@@ -12,6 +12,10 @@ export default function TabLayout() {
           backgroundColor: "#111111",
           borderTopColor: "#222222",
           borderTopWidth: 1,
+          maxWidth: 640,
+          width: "100%",
+          alignSelf: "center",
+          marginHorizontal: "auto"
         },
         headerShown: false,
       }}

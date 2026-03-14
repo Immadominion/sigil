@@ -92,9 +92,10 @@ function RootLayoutNav() {
           options={{
             headerShown: true,
             headerTitle: "Agent Details",
-            headerStyle: { backgroundColor: "#111111" },
+            headerStyle: { backgroundColor: "#111111", maxWidth: 640, width: "100%", alignSelf: "center", marginHorizontal: "auto" } as any,
             headerTintColor: "#F5F5F5",
             presentation: "card",
+            headerTitleAlign: "center",
           }}
         />
       </Stack>
