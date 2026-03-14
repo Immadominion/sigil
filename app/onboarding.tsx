@@ -89,6 +89,8 @@ export default function Onboarding() {
   // Initialize step
   const [depositSol, setDepositSol] = useState("0.1");
   const [initializing, setInitializing] = useState(false);
+  const [airdropping, setAirdropping] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
   // iOS deeplink refs
   const dappKeyPairRef = useRef<nacl.BoxKeyPair | null>(null);
@@ -354,6 +356,47 @@ export default function Onboarding() {
       setConnecting(false);
     }
   }, []);
+
+  // Fetch wallet SOL balance on devnet
+  const refreshBalance = useCallback(async () => {
+    const connected = pendingRef.current;
+    if (!connected) return;
+    try {
+      const connection = new Connection(SOLANA_RPC_URL, "confirmed");
+      const balance = await connection.getBalance(new PublicKey(connected.walletAddress));
+      setWalletBalance(balance / LAMPORTS_PER_SOL);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Auto-refresh balance when reaching initialize step
+  useEffect(() => {
+    if (step === "initialize") refreshBalance();
+  }, [step, refreshBalance]);
+
+  // Devnet airdrop
+  const handleAirdrop = async () => {
+    const connected = pendingRef.current;
+    if (!connected || SOLANA_CLUSTER !== "devnet") return;
+    setAirdropping(true);
+    setError(null);
+    try {
+      const connection = new Connection(SOLANA_RPC_URL, "confirmed");
+      const sig = await connection.requestAirdrop(
+        new PublicKey(connected.walletAddress),
+        2 * LAMPORTS_PER_SOL,
+      );
+      await connection.confirmTransaction(sig, "confirmed");
+      await refreshBalance();
+    } catch (err: any) {
+      showError(err.message?.includes("429")
+        ? "Devnet airdrop rate-limited. Try again in a minute, or use solfaucet.com."
+        : err.message ?? "Airdrop failed");
+    } finally {
+      setAirdropping(false);
+    }
+  };
 
   // Initialize: build + send create wallet tx (+ optional deposit)
   const handleInitialize = async (skipDeposit = false) => {
@@ -654,7 +697,50 @@ export default function Onboarding() {
                 {connected.walletAddress.slice(0, 6)}...{connected.walletAddress.slice(-4)}
               </Text>
             )}
+            {walletBalance !== null && (
+              <Text style={{ color: "#8b949e", fontSize: 12, marginTop: 4 }}>
+                Balance: {walletBalance.toFixed(4)} SOL
+              </Text>
+            )}
           </View>
+
+          {/* Devnet airdrop (only visible on devnet) */}
+          {SOLANA_CLUSTER === "devnet" && (
+            <View style={{
+              backgroundColor: "rgba(210,153,34,0.08)", borderRadius: 6,
+              borderWidth: 1, borderColor: "rgba(210,153,34,0.25)",
+              padding: 16, marginBottom: 16,
+            }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: "#d29922", fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                    Devnet Mode
+                  </Text>
+                  <Text style={{ color: "#8b949e", fontSize: 12, marginTop: 4, lineHeight: 18 }}>
+                    {walletBalance !== null && walletBalance < 0.01
+                      ? "Your wallet needs SOL to create the on-chain account."
+                      : "Request free test SOL if you need more."}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={handleAirdrop}
+                  disabled={airdropping}
+                  style={{
+                    backgroundColor: airdropping ? "rgba(210,153,34,0.15)" : "rgba(210,153,34,0.2)",
+                    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 6, marginLeft: 12,
+                  }}
+                >
+                  {airdropping ? (
+                    <ActivityIndicator size="small" color="#d29922" />
+                  ) : (
+                    <Text style={{ color: "#d29922", fontWeight: "700", fontSize: 13 }}>
+                      Airdrop 2 SOL
+                    </Text>
+                  )}
+                </Pressable>
+              </View>
+            </View>
+          )}
 
           {/* Initialize card */}
           <View style={{
