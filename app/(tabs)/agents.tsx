@@ -109,6 +109,8 @@ export default function AgentsScreen() {
         (window as any).solflare ??
         (window as any).solana;
       if (!provider) throw new Error("No wallet provider");
+      // Ensure wallet is connected (may have disconnected since onboarding)
+      if (!provider.isConnected) await provider.connect();
       await provider.signAndSendTransaction(tx);
     } else {
       const { transact } = await import(

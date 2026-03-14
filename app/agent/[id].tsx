@@ -211,20 +211,20 @@ export default function AgentDetail() {
             <Text className="text-white text-xl font-bold">{agent.name}</Text>
             <View
               className={`flex-row items-center gap-1.5 px-3 py-1 rounded-full ${agent.status === "active"
-                  ? "bg-sigil-success/20"
-                  : "bg-sigil-warning/20"
+                ? "bg-sigil-success/20"
+                : "bg-sigil-warning/20"
                 }`}
             >
               <View
                 className={`w-2 h-2 rounded-full ${agent.status === "active"
-                    ? "bg-sigil-success"
-                    : "bg-sigil-warning"
+                  ? "bg-sigil-success"
+                  : "bg-sigil-warning"
                   }`}
               />
               <Text
                 className={`text-xs font-medium capitalize ${agent.status === "active"
-                    ? "text-sigil-success"
-                    : "text-sigil-warning"
+                  ? "text-sigil-success"
+                  : "text-sigil-warning"
                   }`}
               >
                 {agent.status}
@@ -317,19 +317,19 @@ export default function AgentDetail() {
             </View>
             {(editDailyLimit !== (parseInt(agent.dailyLimitLamports) / 1e9).toString() ||
               editPerTxLimit !== (parseInt(agent.perTxLimitLamports) / 1e9).toString()) && (
-              <Pressable
-                onPress={handleSaveLimits}
-                disabled={savingSettings}
-                style={{
-                  backgroundColor: savingSettings ? "rgba(88,166,255,0.4)" : "#58a6ff",
-                  borderRadius: 6, paddingVertical: 10, alignItems: "center",
-                }}
-              >
-                <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>
-                  {savingSettings ? "Saving..." : "Save Limits"}
-                </Text>
-              </Pressable>
-            )}
+                <Pressable
+                  onPress={handleSaveLimits}
+                  disabled={savingSettings}
+                  style={{
+                    backgroundColor: savingSettings ? "rgba(88,166,255,0.4)" : "#58a6ff",
+                    borderRadius: 6, paddingVertical: 10, alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>
+                    {savingSettings ? "Saving..." : "Save Limits"}
+                  </Text>
+                </Pressable>
+              )}
           </View>
         </View>
 
@@ -435,14 +435,14 @@ export default function AgentDetail() {
               onPress={handleRevokeSessions}
               disabled={revokingSessions}
               className={`rounded-2xl p-4 items-center border ${revokingSessions
-                  ? "border-sigil-danger/30 bg-sigil-danger/5"
-                  : "border-sigil-danger/50 bg-sigil-danger/10"
+                ? "border-sigil-danger/30 bg-sigil-danger/5"
+                : "border-sigil-danger/50 bg-sigil-danger/10"
                 }`}
             >
               <Text
                 className={`font-medium ${revokingSessions
-                    ? "text-sigil-danger/50"
-                    : "text-sigil-danger"
+                  ? "text-sigil-danger/50"
+                  : "text-sigil-danger"
                   }`}
               >
                 {revokingSessions
@@ -455,14 +455,14 @@ export default function AgentDetail() {
           <Pressable
             onPress={handleSuspend}
             className={`rounded-2xl p-4 items-center ${agent.status === "active"
-                ? "bg-sigil-warning/20 border border-sigil-warning/30"
-                : "bg-sigil-success/20 border border-sigil-success/30"
+              ? "bg-sigil-warning/20 border border-sigil-warning/30"
+              : "bg-sigil-success/20 border border-sigil-success/30"
               }`}
           >
             <Text
               className={`font-medium ${agent.status === "active"
-                  ? "text-sigil-warning"
-                  : "text-sigil-success"
+                ? "text-sigil-warning"
+                : "text-sigil-success"
                 }`}
             >
               {agent.status === "active" ? "Suspend Agent" : "Reactivate Agent"}
