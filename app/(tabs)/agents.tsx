@@ -110,6 +110,7 @@ export default function AgentsScreen() {
       name: agent.name,
       dailyLimitLamports: BigInt(agent.dailyLimitLamports ?? 5n * LAMPORTS),
       perTxLimitLamports: BigInt(agent.perTxLimitLamports ?? 1n * LAMPORTS),
+      allowedPrograms: [SystemProgram.programId],
       agentFundingLamports: AGENT_FUNDING,
     });
 
