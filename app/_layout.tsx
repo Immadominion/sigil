@@ -1,34 +1,48 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import "../global.css";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
+import "react-native-reanimated";
+import { useAuthStore } from "../stores/auth";
 
-import { useColorScheme } from '@/components/useColorScheme';
-
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from 'expo-router';
+export { ErrorBoundary } from "expo-router";
 
 export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: "(tabs)",
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+// Custom dark theme for Sigil
+const SigilDarkTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: "#0B0E17",
+    card: "#141828",
+    border: "#1E2640",
+    primary: "#5B7FFF",
+    text: "#F1F5F9",
+    notification: "#EF4444",
+  },
+};
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+  const loadStoredAuth = useAuthStore((s) => s.loadStoredAuth);
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
     if (error) throw error;
   }, [error]);
+
+  useEffect(() => {
+    loadStoredAuth();
+  }, []);
 
   useEffect(() => {
     if (loaded) {
@@ -36,21 +50,53 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
   return <RootLayoutNav />;
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === "onboarding";
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace("/onboarding");
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace("/(tabs)");
+    }
+  }, [isAuthenticated, isLoading, segments]);
+
+  // Don't render any screens until auth state is resolved
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#0B0E17", alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color="#5B7FFF" />
+      </View>
+    );
+  }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+    <ThemeProvider value={SigilDarkTheme}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen
+          name="agent/[id]"
+          options={{
+            headerShown: true,
+            headerTitle: "Agent Details",
+            headerStyle: { backgroundColor: "#141828" },
+            headerTintColor: "#F1F5F9",
+            presentation: "card",
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );
