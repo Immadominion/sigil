@@ -220,24 +220,24 @@ export default function Dashboard() {
               backgroundColor: walletInfo?.isLocked
                 ? "rgba(210,153,34,0.12)"
                 : walletInfo?.onChain
-                ? "rgba(63,185,80,0.12)"
-                : "rgba(210,153,34,0.12)",
+                  ? "rgba(63,185,80,0.12)"
+                  : "rgba(210,153,34,0.12)",
             }}>
               <View style={{
                 width: 6, height: 6, borderRadius: 3,
                 backgroundColor: walletInfo?.isLocked
                   ? "#d29922"
                   : walletInfo?.onChain
-                  ? "#3fb950"
-                  : "#d29922",
+                    ? "#3fb950"
+                    : "#d29922",
               }} />
               <Text style={{
                 fontSize: 11, fontWeight: "600",
                 color: walletInfo?.isLocked
                   ? "#d29922"
                   : walletInfo?.onChain
-                  ? "#3fb950"
-                  : "#d29922",
+                    ? "#3fb950"
+                    : "#d29922",
               }}>
                 {walletInfo?.isLocked ? "Locked" : walletInfo?.onChain ? "Active" : "Not Initialized"}
               </Text>
@@ -423,8 +423,8 @@ export default function Dashboard() {
                     agent.status === "active"
                       ? "#3fb950"
                       : agent.status === "suspended"
-                      ? "#f85149"
-                      : "#484f58",
+                        ? "#f85149"
+                        : "#484f58",
                 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: "#e6edf3", fontSize: 14, fontWeight: "600" }}>{agent.name}</Text>

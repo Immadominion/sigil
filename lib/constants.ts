@@ -1,6 +1,6 @@
 export const API_BASE_URL = __DEV__
   ? "http://localhost:3003"
-  : "https://api.sigil.app"; // TODO: replace with actual domain
+  : "https://sigil-backend-production-fd3d.up.railway.app"; // TODO: replace with actual domain
 
 export const SEAL_PROGRAM_ID = "EV3TKRVz7pTHpAqBTjP8jmwuvoRBRCpjmVSPHhcMnXqb";
 

@@ -7,6 +7,7 @@ import {
   Alert,
   Platform,
   Share,
+  TextInput,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import QRCode from "react-native-qrcode-svg";
@@ -21,6 +22,9 @@ export default function AgentDetail() {
   const [newToken, setNewToken] = useState<string | null>(null);
   const [generatingToken, setGeneratingToken] = useState(false);
   const [revokingSessions, setRevokingSessions] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [editDailyLimit, setEditDailyLimit] = useState("");
+  const [editPerTxLimit, setEditPerTxLimit] = useState("");
   const router = useRouter();
 
   const agentId = parseInt(id);
@@ -33,6 +37,8 @@ export default function AgentDetail() {
       ]);
       setAgent(agentData);
       setPairingTokens(tokens);
+      setEditDailyLimit((parseInt(agentData.dailyLimitLamports) / 1e9).toString());
+      setEditPerTxLimit((parseInt(agentData.perTxLimitLamports) / 1e9).toString());
     } catch (err) {
       console.error("Failed to load agent:", err);
     }
@@ -148,9 +154,44 @@ export default function AgentDetail() {
   const shortenAddress = (addr: string) =>
     `${addr.slice(0, 4)}...${addr.slice(-4)}`;
 
-  const formatLamports = (lamports: string) => {
-    const sol = parseInt(lamports) / 1e9;
-    return `${sol.toFixed(2)} SOL`;
+  const handleToggleAutoApprove = async () => {
+    if (!agent) return;
+    try {
+      await api.updateAgent(agentId, { autoApprove: !agent.autoApprove });
+      await loadAgent();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to update";
+      if (Platform.OS === "web") window.alert(msg);
+      else Alert.alert("Error", msg);
+    }
+  };
+
+  const handleSaveLimits = async () => {
+    const daily = parseFloat(editDailyLimit);
+    const perTx = parseFloat(editPerTxLimit);
+    if (isNaN(daily) || isNaN(perTx) || daily <= 0 || perTx <= 0) {
+      const msg = "Enter valid positive numbers for limits.";
+      if (Platform.OS === "web") window.alert(msg);
+      else Alert.alert("Invalid", msg);
+      return;
+    }
+    if (perTx > daily) {
+      const msg = "Per-TX limit cannot exceed daily limit.";
+      if (Platform.OS === "web") window.alert(msg);
+      else Alert.alert("Invalid", msg);
+      return;
+    }
+    setSavingSettings(true);
+    try {
+      await api.updateAgent(agentId, { dailyLimitSol: daily, perTxLimitSol: perTx });
+      await loadAgent();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to update";
+      if (Platform.OS === "web") window.alert(msg);
+      else Alert.alert("Error", msg);
+    } finally {
+      setSavingSettings(false);
+    }
   };
 
   if (!agent) {
@@ -169,25 +210,22 @@ export default function AgentDetail() {
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-white text-xl font-bold">{agent.name}</Text>
             <View
-              className={`flex-row items-center gap-1.5 px-3 py-1 rounded-full ${
-                agent.status === "active"
+              className={`flex-row items-center gap-1.5 px-3 py-1 rounded-full ${agent.status === "active"
                   ? "bg-sigil-success/20"
                   : "bg-sigil-warning/20"
-              }`}
+                }`}
             >
               <View
-                className={`w-2 h-2 rounded-full ${
-                  agent.status === "active"
+                className={`w-2 h-2 rounded-full ${agent.status === "active"
                     ? "bg-sigil-success"
                     : "bg-sigil-warning"
-                }`}
+                  }`}
               />
               <Text
-                className={`text-xs font-medium capitalize ${
-                  agent.status === "active"
+                className={`text-xs font-medium capitalize ${agent.status === "active"
                     ? "text-sigil-success"
                     : "text-sigil-warning"
-                }`}
+                  }`}
               >
                 {agent.status}
               </Text>
@@ -204,31 +242,94 @@ export default function AgentDetail() {
             <View className="flex-row justify-between">
               <Text className="text-sigil-muted text-sm">On-chain</Text>
               <Text
-                className={`text-sm font-medium ${
-                  agent.onChain ? "text-sigil-success" : "text-sigil-warning"
-                }`}
+                className={`text-sm font-medium ${agent.onChain ? "text-sigil-success" : "text-sigil-warning"
+                  }`}
               >
                 {agent.onChain ? "Registered" : "Pending"}
               </Text>
             </View>
-            <View className="flex-row justify-between">
-              <Text className="text-sigil-muted text-sm">Daily Limit</Text>
-              <Text className="text-white text-sm">
-                {formatLamports(agent.dailyLimitLamports)}
+          </View>
+        </View>
+
+        {/* Settings Section */}
+        <View className="bg-sigil-surface border border-sigil-border rounded-2xl p-5 mb-4">
+          <Text className="text-white text-lg font-semibold mb-4">Settings</Text>
+
+          {/* Auto-approve toggle */}
+          <Pressable
+            onPress={handleToggleAutoApprove}
+            style={{
+              flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+              paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "rgba(48,54,61,0.5)",
+            }}
+          >
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={{ color: "#e6edf3", fontSize: 14, fontWeight: "600" }}>Auto-approve sessions</Text>
+              <Text style={{ color: "#6e7681", fontSize: 11, marginTop: 2 }}>
+                {agent.autoApprove
+                  ? "Sessions granted instantly — no manual approval needed"
+                  : "You must approve each session request in the app"}
               </Text>
             </View>
-            <View className="flex-row justify-between">
-              <Text className="text-sigil-muted text-sm">Per-TX Limit</Text>
-              <Text className="text-white text-sm">
-                {formatLamports(agent.perTxLimitLamports)}
-              </Text>
+            <View style={{
+              width: 44, height: 24, borderRadius: 12,
+              backgroundColor: agent.autoApprove ? "#3fb950" : "#30363d",
+              justifyContent: "center", paddingHorizontal: 2,
+            }}>
+              <View style={{
+                width: 20, height: 20, borderRadius: 10,
+                backgroundColor: "#fff",
+                alignSelf: agent.autoApprove ? "flex-end" : "flex-start",
+              }} />
             </View>
-            <View className="flex-row justify-between">
-              <Text className="text-sigil-muted text-sm">Auto-approve</Text>
-              <Text className="text-white text-sm">
-                {agent.autoApprove ? "Yes" : "No"}
-              </Text>
+          </Pressable>
+
+          {/* Spending limits */}
+          <View style={{ paddingTop: 14 }}>
+            <Text style={{ color: "#8b949e", fontSize: 12, fontWeight: "600", marginBottom: 10 }}>Spending Limits</Text>
+            <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#6e7681", fontSize: 11, marginBottom: 4 }}>Daily (SOL)</Text>
+                <TextInput
+                  value={editDailyLimit}
+                  onChangeText={setEditDailyLimit}
+                  keyboardType="decimal-pad"
+                  style={{
+                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10,
+                    color: "#fff", fontSize: 15,
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#6e7681", fontSize: 11, marginBottom: 4 }}>Per TX (SOL)</Text>
+                <TextInput
+                  value={editPerTxLimit}
+                  onChangeText={setEditPerTxLimit}
+                  keyboardType="decimal-pad"
+                  style={{
+                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10,
+                    color: "#fff", fontSize: 15,
+                  }}
+                />
+              </View>
             </View>
+            {(editDailyLimit !== (parseInt(agent.dailyLimitLamports) / 1e9).toString() ||
+              editPerTxLimit !== (parseInt(agent.perTxLimitLamports) / 1e9).toString()) && (
+              <Pressable
+                onPress={handleSaveLimits}
+                disabled={savingSettings}
+                style={{
+                  backgroundColor: savingSettings ? "rgba(88,166,255,0.4)" : "#58a6ff",
+                  borderRadius: 6, paddingVertical: 10, alignItems: "center",
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>
+                  {savingSettings ? "Saving..." : "Save Limits"}
+                </Text>
+              </Pressable>
+            )}
           </View>
         </View>
 
@@ -284,9 +385,8 @@ export default function AgentDetail() {
           <Pressable
             onPress={handleGenerateToken}
             disabled={generatingToken}
-            className={`border border-sigil-accent rounded-2xl p-4 items-center mb-3 ${
-              generatingToken ? "opacity-50" : ""
-            }`}
+            className={`border border-sigil-accent rounded-2xl p-4 items-center mb-3 ${generatingToken ? "opacity-50" : ""
+              }`}
           >
             <Text className="text-sigil-accent font-medium">
               {generatingToken ? "Generating..." : "+ Generate Pairing Token"}
@@ -334,18 +434,16 @@ export default function AgentDetail() {
             <Pressable
               onPress={handleRevokeSessions}
               disabled={revokingSessions}
-              className={`rounded-2xl p-4 items-center border ${
-                revokingSessions
+              className={`rounded-2xl p-4 items-center border ${revokingSessions
                   ? "border-sigil-danger/30 bg-sigil-danger/5"
                   : "border-sigil-danger/50 bg-sigil-danger/10"
-              }`}
+                }`}
             >
               <Text
-                className={`font-medium ${
-                  revokingSessions
+                className={`font-medium ${revokingSessions
                     ? "text-sigil-danger/50"
                     : "text-sigil-danger"
-                }`}
+                  }`}
               >
                 {revokingSessions
                   ? "Revoking..."
@@ -356,18 +454,16 @@ export default function AgentDetail() {
 
           <Pressable
             onPress={handleSuspend}
-            className={`rounded-2xl p-4 items-center ${
-              agent.status === "active"
+            className={`rounded-2xl p-4 items-center ${agent.status === "active"
                 ? "bg-sigil-warning/20 border border-sigil-warning/30"
                 : "bg-sigil-success/20 border border-sigil-success/30"
-            }`}
+              }`}
           >
             <Text
-              className={`font-medium ${
-                agent.status === "active"
+              className={`font-medium ${agent.status === "active"
                   ? "text-sigil-warning"
                   : "text-sigil-success"
-              }`}
+                }`}
             >
               {agent.status === "active" ? "Suspend Agent" : "Reactivate Agent"}
             </Text>

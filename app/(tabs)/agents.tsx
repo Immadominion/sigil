@@ -33,6 +33,9 @@ export default function AgentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
+  const [autoApprove, setAutoApprove] = useState(true);
+  const [dailyLimit, setDailyLimit] = useState("5");
+  const [perTxLimit, setPerTxLimit] = useState("1");
   const [creating, setCreating] = useState(false);
   const router = useRouter();
 
@@ -59,7 +62,12 @@ export default function AgentsScreen() {
     if (!newName.trim()) return;
     setCreating(true);
     try {
-      const agent = await api.createAgent({ name: newName.trim() });
+      const agent = await api.createAgent({
+        name: newName.trim(),
+        autoApprove,
+        dailyLimitSol: parseFloat(dailyLimit) || 5,
+        perTxLimitSol: parseFloat(perTxLimit) || 1,
+      });
 
       // Try on-chain registration — non-blocking if it fails
       const ownerAddress = useAuthStore.getState().walletAddress;
@@ -162,9 +170,73 @@ export default function AgentsScreen() {
               maxLength={32}
               autoFocus
             />
+
+            {/* Auto-approve toggle */}
+            <Pressable
+              onPress={() => setAutoApprove(!autoApprove)}
+              style={{
+                flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+                backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                borderRadius: 6, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#e6edf3", fontSize: 14, fontWeight: "600" }}>Auto-approve sessions</Text>
+                <Text style={{ color: "#6e7681", fontSize: 11, marginTop: 2 }}>
+                  {autoApprove ? "Agent gets sessions instantly — no manual approval" : "You must approve each session request in this app"}
+                </Text>
+              </View>
+              <View style={{
+                width: 44, height: 24, borderRadius: 12,
+                backgroundColor: autoApprove ? "#3fb950" : "#30363d",
+                justifyContent: "center",
+                paddingHorizontal: 2,
+              }}>
+                <View style={{
+                  width: 20, height: 20, borderRadius: 10,
+                  backgroundColor: "#fff",
+                  alignSelf: autoApprove ? "flex-end" : "flex-start",
+                }} />
+              </View>
+            </Pressable>
+
+            {/* Spending limits */}
+            <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#8b949e", fontSize: 11, marginBottom: 4, fontWeight: "600" }}>Daily Limit (SOL)</Text>
+                <TextInput
+                  value={dailyLimit}
+                  onChangeText={setDailyLimit}
+                  placeholder="5"
+                  placeholderTextColor="#484f58"
+                  keyboardType="decimal-pad"
+                  style={{
+                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    borderRadius: 6, paddingHorizontal: 16, paddingVertical: 12,
+                    color: "#fff", fontSize: 15,
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#8b949e", fontSize: 11, marginBottom: 4, fontWeight: "600" }}>Per TX Limit (SOL)</Text>
+                <TextInput
+                  value={perTxLimit}
+                  onChangeText={setPerTxLimit}
+                  placeholder="1"
+                  placeholderTextColor="#484f58"
+                  keyboardType="decimal-pad"
+                  style={{
+                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    borderRadius: 6, paddingHorizontal: 16, paddingVertical: 12,
+                    color: "#fff", fontSize: 15,
+                  }}
+                />
+              </View>
+            </View>
+
             <View style={{ flexDirection: "row", gap: 8 }}>
               <Pressable
-                onPress={() => { setShowCreate(false); setNewName(""); }}
+                onPress={() => { setShowCreate(false); setNewName(""); setAutoApprove(true); setDailyLimit("5"); setPerTxLimit("1"); }}
                 style={{
                   flex: 1, paddingVertical: 11, borderRadius: 6,
                   alignItems: "center", borderWidth: 1, borderColor: "#30363d",

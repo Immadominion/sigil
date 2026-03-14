@@ -9,13 +9,13 @@ import {
 import { api, type ActivityItem } from "../../lib/api";
 
 const ACTION_META: Record<string, { label: string; color: string; icon: string }> = {
-  agent_registered:       { label: "Agent Registered",        color: "#58a6ff", icon: "📋" },
-  agent_deregistered:     { label: "Agent Deregistered",      color: "#f85149", icon: "🗑" },
-  session_created:        { label: "Session Created",         color: "#3fb950", icon: "🔓" },
-  session_revoked:        { label: "Session Revoked",         color: "#d29922", icon: "🔒" },
-  pairing_token_created:  { label: "Pairing Token Created",   color: "#58a6ff", icon: "🔗" },
-  pairing_token_revoked:  { label: "Pairing Token Revoked",   color: "#d29922", icon: "✂" },
-  agent_heartbeat:        { label: "Agent Heartbeat",         color: "#30363d", icon: "💓" },
+  agent_registered: { label: "Agent Registered", color: "#58a6ff", icon: "📋" },
+  agent_deregistered: { label: "Agent Deregistered", color: "#f85149", icon: "🗑" },
+  session_created: { label: "Session Created", color: "#3fb950", icon: "🔓" },
+  session_revoked: { label: "Session Revoked", color: "#d29922", icon: "🔒" },
+  pairing_token_created: { label: "Pairing Token Created", color: "#58a6ff", icon: "🔗" },
+  pairing_token_revoked: { label: "Pairing Token Revoked", color: "#d29922", icon: "✂" },
+  agent_heartbeat: { label: "Agent Heartbeat", color: "#30363d", icon: "💓" },
 };
 
 export default function ActivityScreen() {

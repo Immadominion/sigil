@@ -152,7 +152,7 @@ export default function Onboarding() {
           });
           await Linking.openURL(buildPhantomUrl("signMessage", signParams));
 
-        // ── Step 2: Signed ──
+          // ── Step 2: Signed ──
         } else if (/onSignMessage/.test(parsed.pathname + parsed.host)) {
           const nonce = params.get("nonce");
           const data = params.get("data");
@@ -207,7 +207,7 @@ export default function Onboarding() {
           await handlePostConnect(connected);
           setConnecting(false);
 
-        // ── Step 3 (iOS): Transaction sent ──
+          // ── Step 3 (iOS): Transaction sent ──
         } else if (/onSignAndSendTransaction/.test(parsed.pathname + parsed.host)) {
           const nonce = params.get("nonce");
           const data = params.get("data");
@@ -248,7 +248,7 @@ export default function Onboarding() {
   // ── Web: detect installed wallets on mount ──
   useEffect(() => {
     if (Platform.OS !== "web") return;
-    detectWebWallets().then(setWallets).catch(() => {});
+    detectWebWallets().then(setWallets).catch(() => { });
   }, []);
 
   const showError = (msg: string) => {
