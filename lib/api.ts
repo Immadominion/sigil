@@ -78,6 +78,28 @@ class ApiClient {
     );
   }
 
+
+  async withdraw(data: { amountSol?: number; botIds?: string[] }) {
+    return this.request<{ success: boolean; txSignature: string; withdrawSol: number }>(
+      "/api/wallet/withdraw",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
+
+  async withdraw(data: { amountSol?: number; botIds?: string[] }) {
+    return this.request<{ success: boolean; txSignature: string; withdrawSol: number }>(
+      "/api/wallet/withdraw",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  }
+
   async unlockWallet() {
     return this.request<{ success: boolean; isLocked: boolean }>(
       "/api/wallet/unlock",

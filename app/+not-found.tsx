@@ -20,10 +20,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0B0E17",
+    backgroundColor: "#050505",
     padding: 20,
   },
-  title: { fontSize: 20, fontWeight: "bold", color: "#F1F5F9" },
+  title: { fontSize: 20, fontWeight: "bold", color: "#F5F5F5" },
   link: { marginTop: 15, paddingVertical: 15 },
-  linkText: { fontSize: 14, color: "#5B7FFF" },
+  linkText: { fontSize: 14, color: "#FF4500" },
 });

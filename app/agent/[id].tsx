@@ -203,7 +203,7 @@ export default function AgentDetail() {
   }
 
   return (
-    <ScrollView className="flex-1 bg-sigil-bg">
+    <ScrollView contentContainerStyle={{ maxWidth: 640, width: "100%", alignSelf: "center", paddingBottom: 40 }} className="flex-1 bg-sigil-bg">
       <View className="px-5 pt-4 pb-8">
         {/* Agent Header */}
         <View className="bg-sigil-surface border border-sigil-border rounded-2xl p-5 mb-4">
@@ -264,7 +264,7 @@ export default function AgentDetail() {
             }}
           >
             <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={{ color: "#e6edf3", fontSize: 14, fontWeight: "600" }}>Auto-approve sessions</Text>
+              <Text style={{ color: "#F5F5F5", fontSize: 14, fontWeight: "600" }}>Auto-approve sessions</Text>
               <Text style={{ color: "#6e7681", fontSize: 11, marginTop: 2 }}>
                 {agent.autoApprove
                   ? "Sessions granted instantly — no manual approval needed"
@@ -273,7 +273,7 @@ export default function AgentDetail() {
             </View>
             <View style={{
               width: 44, height: 24, borderRadius: 12,
-              backgroundColor: agent.autoApprove ? "#3fb950" : "#30363d",
+              backgroundColor: agent.autoApprove ? "#3fb950" : "#222222",
               justifyContent: "center", paddingHorizontal: 2,
             }}>
               <View style={{
@@ -286,7 +286,7 @@ export default function AgentDetail() {
 
           {/* Spending limits */}
           <View style={{ paddingTop: 14 }}>
-            <Text style={{ color: "#8b949e", fontSize: 12, fontWeight: "600", marginBottom: 10 }}>Spending Limits</Text>
+            <Text style={{ color: "#888888", fontSize: 12, fontWeight: "600", marginBottom: 10 }}>Spending Limits</Text>
             <View style={{ flexDirection: "row", gap: 10, marginBottom: 12 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: "#6e7681", fontSize: 11, marginBottom: 4 }}>Daily (SOL)</Text>
@@ -295,7 +295,7 @@ export default function AgentDetail() {
                   onChangeText={setEditDailyLimit}
                   keyboardType="decimal-pad"
                   style={{
-                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    backgroundColor: "#050505", borderWidth: 1, borderColor: "#222222",
                     borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10,
                     color: "#fff", fontSize: 15,
                   }}
@@ -308,7 +308,7 @@ export default function AgentDetail() {
                   onChangeText={setEditPerTxLimit}
                   keyboardType="decimal-pad"
                   style={{
-                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    backgroundColor: "#050505", borderWidth: 1, borderColor: "#222222",
                     borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10,
                     color: "#fff", fontSize: 15,
                   }}
@@ -321,7 +321,7 @@ export default function AgentDetail() {
                   onPress={handleSaveLimits}
                   disabled={savingSettings}
                   style={{
-                    backgroundColor: savingSettings ? "rgba(88,166,255,0.4)" : "#58a6ff",
+                    backgroundColor: savingSettings ? "rgba(88,166,255,0.4)" : "#FF4500",
                     borderRadius: 6, paddingVertical: 10, alignItems: "center",
                   }}
                 >
@@ -351,7 +351,7 @@ export default function AgentDetail() {
                     value={newToken}
                     size={200}
                     backgroundColor="white"
-                    color="#0B0E17"
+                    color="#050505"
                   />
                 </View>
                 <Text className="text-sigil-muted text-xs mt-2">

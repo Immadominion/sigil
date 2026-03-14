@@ -9,13 +9,13 @@ import {
 import { api, type ActivityItem } from "../../lib/api";
 
 const ACTION_META: Record<string, { label: string; color: string; icon: string }> = {
-  agent_registered: { label: "Agent Registered", color: "#58a6ff", icon: "📋" },
+  agent_registered: { label: "Agent Registered", color: "#FF4500", icon: "📋" },
   agent_deregistered: { label: "Agent Deregistered", color: "#f85149", icon: "🗑" },
   session_created: { label: "Session Created", color: "#3fb950", icon: "🔓" },
   session_revoked: { label: "Session Revoked", color: "#d29922", icon: "🔒" },
-  pairing_token_created: { label: "Pairing Token Created", color: "#58a6ff", icon: "🔗" },
+  pairing_token_created: { label: "Pairing Token Created", color: "#FF4500", icon: "🔗" },
   pairing_token_revoked: { label: "Pairing Token Revoked", color: "#d29922", icon: "✂" },
-  agent_heartbeat: { label: "Agent Heartbeat", color: "#30363d", icon: "💓" },
+  agent_heartbeat: { label: "Agent Heartbeat", color: "#222222", icon: "💓" },
 };
 
 export default function ActivityScreen() {
@@ -56,10 +56,10 @@ export default function ActivityScreen() {
   };
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: "#0d1117" }}
+    <ScrollView contentContainerStyle={{ maxWidth: 640, width: "100%", alignSelf: "center", paddingBottom: 40 }}
+      style={{ flex: 1, backgroundColor: "#050505" }}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#58a6ff" />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF4500" />
       }
       showsVerticalScrollIndicator={false}
     >
@@ -67,25 +67,25 @@ export default function ActivityScreen() {
         {activity.length === 0 ? (
           <View style={{ alignItems: "center", paddingVertical: 80 }}>
             <Text style={{ fontSize: 42, marginBottom: 14 }}>📭</Text>
-            <Text style={{ color: "#8b949e", fontSize: 15, fontWeight: "600", marginBottom: 6 }}>
+            <Text style={{ color: "#888888", fontSize: 15, fontWeight: "600", marginBottom: 6 }}>
               No activity yet
             </Text>
-            <Text style={{ color: "#484f58", fontSize: 13 }}>Events will appear here as agents run</Text>
+            <Text style={{ color: "#444444", fontSize: 13 }}>Events will appear here as agents run</Text>
           </View>
         ) : (
           <View style={{
-            backgroundColor: "#161b22", borderRadius: 6,
-            borderWidth: 1, borderColor: "#30363d", overflow: "hidden",
+            backgroundColor: "#111111", borderRadius: 6,
+            borderWidth: 1, borderColor: "#222222", overflow: "hidden",
           }}>
             {activity.map((item, i) => {
-              const meta = ACTION_META[item.action] ?? { label: item.action, color: "#484f58", icon: "·" };
+              const meta = ACTION_META[item.action] ?? { label: item.action, color: "#444444", icon: "·" };
               return (
                 <View
                   key={item.id}
                   style={{
                     flexDirection: "row", alignItems: "flex-start", gap: 12,
                     paddingHorizontal: 16, paddingVertical: 14,
-                    borderTopWidth: i === 0 ? 0 : 1, borderTopColor: "#30363d",
+                    borderTopWidth: i === 0 ? 0 : 1, borderTopColor: "#222222",
                   }}
                 >
                   {/* Icon badge */}
@@ -106,14 +106,14 @@ export default function ActivityScreen() {
                       <Text style={{ color: "#6e7681", fontSize: 11 }}>{item.agent.name}</Text>
                     )}
                     {item.txSignature && (
-                      <Text style={{ color: "#484f58", fontSize: 10, fontFamily: "SpaceMono", marginTop: 2 }}>
+                      <Text style={{ color: "#444444", fontSize: 10, fontFamily: "SpaceMono", marginTop: 2 }}>
                         {item.txSignature.slice(0, 12)}...
                       </Text>
                     )}
                   </View>
 
                   {/* Time */}
-                  <Text style={{ color: "#484f58", fontSize: 11, marginTop: 2 }}>{formatTime(item.createdAt)}</Text>
+                  <Text style={{ color: "#444444", fontSize: 11, marginTop: 2 }}>{formatTime(item.createdAt)}</Text>
                 </View>
               );
             })}
@@ -126,10 +126,10 @@ export default function ActivityScreen() {
             onPress={() => setLimit((l) => l + 50)}
             style={{
               marginTop: 16, paddingVertical: 12, alignItems: "center",
-              borderRadius: 6, borderWidth: 1, borderColor: "#30363d",
+              borderRadius: 6, borderWidth: 1, borderColor: "#222222",
             }}
           >
-            <Text style={{ color: "#58a6ff", fontSize: 13, fontWeight: "600" }}>Load More</Text>
+            <Text style={{ color: "#FF4500", fontSize: 13, fontWeight: "600" }}>Load More</Text>
           </Pressable>
         )}
       </View>

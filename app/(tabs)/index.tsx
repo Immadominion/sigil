@@ -7,29 +7,24 @@ import {
   Pressable,
   Platform,
   Alert,
+  Image,
 } from "react-native";
+import { Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { SOLANA_RPC_URL } from "../../lib/constants";
 import { useRouter } from "expo-router";
+import * as Clipboard from "expo-clipboard";
+import { Shield, ShieldAlert, ShieldCheck, Unlink, Lock, Unlock, Copy, Download, Bot, Activity, ArrowRight, Wallet } from "lucide-react-native";
 import { useAuthStore } from "../../stores/auth";
 import { api, type Agent, type PendingApproval, type ActivityItem } from "../../lib/api";
 
-const ACTIVITY_LABELS: Record<string, string> = {
-  agent_registered: "Agent Registered",
-  agent_deregistered: "Agent Deregistered",
-  session_created: "Session Created",
-  session_revoked: "Session Revoked",
-  pairing_token_created: "Pairing Token Created",
-  pairing_token_revoked: "Pairing Token Revoked",
-  agent_heartbeat: "Agent Heartbeat",
-};
-
 const ACTIVITY_COLORS: Record<string, string> = {
-  agent_registered: "#58a6ff",
+  agent_registered: "#FF4500",
   agent_deregistered: "#f85149",
   session_created: "#3fb950",
   session_revoked: "#d29922",
-  pairing_token_created: "#58a6ff",
+  pairing_token_created: "#FF4500",
   pairing_token_revoked: "#d29922",
-  agent_heartbeat: "#30363d",
+  agent_heartbeat: "#222222",
 };
 
 export default function Dashboard() {
@@ -41,6 +36,7 @@ export default function Dashboard() {
     isLocked: boolean;
   } | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [balance, setBalance] = useState<number>(0);
   const [refreshing, setRefreshing] = useState(false);
   const [revoking, setRevoking] = useState(false);
   const [togglingLock, setTogglingLock] = useState(false);
@@ -59,6 +55,14 @@ export default function Dashboard() {
       setWalletInfo({ onChain: walletData.onChain, isLocked: walletData.isLocked });
       setPendingApprovals(approvals);
       setActivity(activityData);
+
+      if (walletData.sealWalletAddress) {
+        try {
+          const connection = new Connection(SOLANA_RPC_URL);
+          const bal = await connection.getBalance(new PublicKey(walletData.sealWalletAddress));
+          setBalance(bal / LAMPORTS_PER_SOL);
+        } catch (e) { console.error("Balance fetch error:", e); }
+      }
     } catch (err) {
       console.error("Failed to load dashboard:", err);
     }
@@ -75,20 +79,16 @@ export default function Dashboard() {
   };
 
   const activeAgents = agents.filter((a) => a.status === "active").length;
-  const activeSessions = agents.reduce(
-    (sum, a) => sum + (a.sessions?.filter((s) => s.isActive).length ?? 0),
-    0
-  );
+
   const short = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
-  const formatTime = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 1) return "just now";
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h ago`;
-    return `${Math.floor(h / 24)}d ago`;
+  const copyToClipboard = async (text: string, type: string) => {
+    await Clipboard.setStringAsync(text);
+    if (Platform.OS === "web") {
+      window.alert(`${type} copied to clipboard!`);
+    } else {
+      Alert.alert("Copied", `${type} copied to clipboard`);
+    }
   };
 
   const handleToggleLock = async () => {
@@ -173,320 +173,188 @@ export default function Dashboard() {
   };
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: "#0d1117" }}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#58a6ff" />
-      }
-      showsVerticalScrollIndicator={false}
-    >
-      {/* ── Header ── */}
-      <View style={{
-        flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-        paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12,
-      }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <Text style={{ fontSize: 20, lineHeight: 24 }}>⬡</Text>
-          <Text style={{ color: "#fff", fontSize: 18, fontWeight: "700", letterSpacing: -0.5 }}>Sigil</Text>
-        </View>
-        <Pressable
-          onPress={logout}
-          style={{
-            paddingHorizontal: 14, paddingVertical: 7,
-            backgroundColor: "#161b22", borderRadius: 6,
-            borderWidth: 1, borderColor: "#30363d",
-          }}
+    <View style={{ flex: 1, backgroundColor: "#050505", alignItems: "center" }}>
+      <View style={{ width: "100%", maxWidth: 640, flex: 1 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF4500" />}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={{ color: "#8b949e", fontSize: 12, fontWeight: "600" }}>Disconnect</Text>
-        </Pressable>
-      </View>
-
-      <View style={{ paddingHorizontal: 20, paddingBottom: 40 }}>
-
-        {/* ── Wallet Card ── */}
-        <View style={{
-          backgroundColor: "#161b22", borderRadius: 6,
-          borderWidth: 1, borderColor: "#30363d",
-          padding: 20, marginBottom: 14,
-        }}>
-          {/* Card header row */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-            <Text style={{ color: "#484f58", fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, fontWeight: "600" }}>
-              Seal Wallet
-            </Text>
-            <View style={{
-              flexDirection: "row", alignItems: "center", gap: 5,
-              paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
-              backgroundColor: walletInfo?.isLocked
-                ? "rgba(210,153,34,0.12)"
-                : walletInfo?.onChain
-                  ? "rgba(63,185,80,0.12)"
-                  : "rgba(210,153,34,0.12)",
-            }}>
-              <View style={{
-                width: 6, height: 6, borderRadius: 3,
-                backgroundColor: walletInfo?.isLocked
-                  ? "#d29922"
-                  : walletInfo?.onChain
-                    ? "#3fb950"
-                    : "#d29922",
-              }} />
-              <Text style={{
-                fontSize: 11, fontWeight: "600",
-                color: walletInfo?.isLocked
-                  ? "#d29922"
-                  : walletInfo?.onChain
-                    ? "#3fb950"
-                    : "#d29922",
-              }}>
-                {walletInfo?.isLocked ? "Locked" : walletInfo?.onChain ? "Active" : "Not Initialized"}
-              </Text>
-            </View>
-          </View>
-
-          {/* Address */}
-          <Text style={{
-            color: "#e6edf3", fontSize: 22, fontWeight: "700",
-            fontFamily: "SpaceMono", letterSpacing: -0.5, marginBottom: 4,
-          }}>
-            {walletAddress ? short(walletAddress) : "—"}
-          </Text>
-          {sealWalletAddress && (
-            <Text style={{ color: "#484f58", fontSize: 11, fontFamily: "SpaceMono", marginBottom: 18 }}>
-              Seal: {short(sealWalletAddress)}
-            </Text>
-          )}
-
-          {/* Divider */}
-          <View style={{ height: 1, backgroundColor: "#30363d", marginBottom: 16 }} />
-
-          {/* Actions */}
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <Pressable
-              onPress={handleToggleLock}
-              disabled={togglingLock || !walletInfo?.onChain}
-              style={{
-                flex: 1, paddingVertical: 11, borderRadius: 6, alignItems: "center",
-                borderWidth: 1,
-                borderColor: walletInfo?.isLocked ? "rgba(63,185,80,0.35)" : "rgba(210,153,34,0.35)",
-                backgroundColor: walletInfo?.isLocked ? "rgba(63,185,80,0.07)" : "rgba(210,153,34,0.07)",
-                opacity: (togglingLock || !walletInfo?.onChain) ? 0.4 : 1,
-              }}
-            >
-              <Text style={{
-                fontSize: 12, fontWeight: "600",
-                color: walletInfo?.isLocked ? "#3fb950" : "#d29922",
-              }}>
-                {togglingLock ? "•••" : walletInfo?.isLocked ? "🔓 Unlock" : "🔒 Lock"}
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handleRevokeAll}
-              disabled={revoking}
-              style={{
-                flex: 1, paddingVertical: 11, borderRadius: 6, alignItems: "center",
-                borderWidth: 1, borderColor: "rgba(248,81,73,0.3)",
-                backgroundColor: "rgba(248,81,73,0.06)",
-                opacity: revoking ? 0.4 : 1,
-              }}
-            >
-              <Text style={{ color: "#f85149", fontSize: 12, fontWeight: "600" }}>
-                {revoking ? "•••" : "🚨 Revoke All"}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* ── Stats Row ── */}
-        <View style={{ flexDirection: "row", gap: 10, marginBottom: 20 }}>
-          {[
-            { label: "Agents", value: agents.length, warn: false },
-            { label: "Active", value: activeAgents, warn: false },
-            { label: "Sessions", value: activeSessions, warn: false },
-            { label: "Pending", value: pendingApprovals.length, warn: pendingApprovals.length > 0 },
-          ].map((stat) => (
-            <View key={stat.label} style={{
-              flex: 1, backgroundColor: "#161b22", borderRadius: 6,
-              borderWidth: 1,
-              borderColor: stat.warn && stat.value > 0 ? "rgba(210,153,34,0.3)" : "#30363d",
-              paddingVertical: 16, alignItems: "center",
-            }}>
-              <Text style={{
-                fontSize: 24, fontWeight: "700",
-                color: stat.warn && stat.value > 0 ? "#d29922" : "#e6edf3",
-              }}>
-                {stat.value}
-              </Text>
-              <Text style={{ color: "#6e7681", fontSize: 10, marginTop: 3, fontWeight: "500" }}>
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {/* ── Pending Approvals ── */}
-        {pendingApprovals.length > 0 && (
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700", marginBottom: 10 }}>
-              Pending Approvals
-            </Text>
-            {pendingApprovals.map((approval) => (
-              <View key={approval.id} style={{
-                backgroundColor: "rgba(210,153,34,0.05)",
-                borderRadius: 6, borderWidth: 1, borderColor: "rgba(210,153,34,0.2)",
-                padding: 16, marginBottom: 8,
-              }}>
-                <Text style={{ color: "#d29922", fontSize: 14, fontWeight: "600", marginBottom: 4 }}>
-                  {approval.agent?.name ?? `Agent #${approval.agentId}`}
-                </Text>
-                <Text style={{ color: "#8b949e", fontSize: 12, marginBottom: 14 }}>
-                  Requesting session approval
-                </Text>
-                <View style={{ flexDirection: "row", gap: 8 }}>
-                  <Pressable
-                    onPress={() => handleApprove(approval.id)}
-                    style={{
-                      flex: 1, paddingVertical: 10, borderRadius: 6, alignItems: "center",
-                      backgroundColor: "rgba(63,185,80,0.12)",
-                      borderWidth: 1, borderColor: "rgba(63,185,80,0.3)",
-                    }}
-                  >
-                    <Text style={{ color: "#3fb950", fontSize: 13, fontWeight: "600" }}>Approve</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleReject(approval.id)}
-                    style={{
-                      flex: 1, paddingVertical: 10, borderRadius: 6, alignItems: "center",
-                      backgroundColor: "rgba(248,81,73,0.08)",
-                      borderWidth: 1, borderColor: "rgba(248,81,73,0.25)",
-                    }}
-                  >
-                    <Text style={{ color: "#f85149", fontSize: 13, fontWeight: "600" }}>Reject</Text>
-                  </Pressable>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* ── Agents Section ── */}
-        <View style={{ marginBottom: 20 }}>
+          {/* Header */}
           <View style={{
-            flexDirection: "row", alignItems: "center",
-            justifyContent: "space-between", marginBottom: 10,
+            flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+            paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 20, paddingBottom: 20,
           }}>
-            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>Agents</Text>
-            <Pressable onPress={() => router.push("/(tabs)/agents")}>
-              <Text style={{ color: "#58a6ff", fontSize: 12, fontWeight: "600" }}>View All →</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              <Image source={require("../../assets/images/logo.png")} style={{ width: 28, height: 28 }} resizeMode="contain" />
+              <Text style={{ color: "#F5F5F5", fontSize: 22, fontWeight: "400", letterSpacing: 1, fontFamily: Platform.OS === "ios" ? "Georgia" : "serif" }}>Sigil</Text>
+            </View>
+            <Pressable
+              onPress={logout}
+              style={{
+                flexDirection: "row", alignItems: "center", gap: 6,
+                paddingHorizontal: 12, paddingVertical: 8,
+                backgroundColor: "#111111", borderRadius: 8,
+                borderWidth: 1, borderColor: "#222222",
+              }}
+            >
+              <Unlink size={14} color="#888888" />
+              <Text style={{ color: "#888888", fontSize: 13, fontWeight: "600" }}>Disconnect</Text>
             </Pressable>
           </View>
 
-          {agents.length === 0 ? (
+          <View style={{ paddingHorizontal: 20 }}>
+
+            {/* Main Smart Wallet Card */}
             <View style={{
-              backgroundColor: "#161b22", borderRadius: 6,
-              borderWidth: 1, borderColor: "#30363d",
-              padding: 24, alignItems: "center",
+              backgroundColor: "#FF4500", borderRadius: 16,
+              padding: 24, marginBottom: 20,
+              shadowColor: "#FF4500", shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.15, shadowRadius: 24, elevation: 10
             }}>
-              <Text style={{ color: "#8b949e", fontSize: 14, marginBottom: 6 }}>No agents yet</Text>
-              <Text style={{ color: "#484f58", fontSize: 12, marginBottom: 16, textAlign: "center" }}>
-                Register your first AI agent to get started
-              </Text>
-              <Pressable
-                onPress={() => router.push("/(tabs)/agents")}
-                style={{
-                  paddingHorizontal: 20, paddingVertical: 10,
-                  backgroundColor: "rgba(88,166,255,0.1)", borderRadius: 6,
-                  borderWidth: 1, borderColor: "rgba(88,166,255,0.3)",
-                }}
-              >
-                <Text style={{ color: "#58a6ff", fontSize: 13, fontWeight: "600" }}>
-                  Register Agent
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <Text style={{ color: "#FFFFFF", fontSize: 14, fontWeight: "600", opacity: 0.9 }}>
+                  Smart Wallet (PDA)
                 </Text>
-              </Pressable>
-            </View>
-          ) : (
-            agents.slice(0, 3).map((agent) => (
-              <Pressable
-                key={agent.id}
-                onPress={() => router.push(`/agent/${agent.id}`)}
-                style={{
-                  flexDirection: "row", alignItems: "center", gap: 12,
-                  backgroundColor: "#161b22", borderRadius: 6,
-                  borderWidth: 1, borderColor: "#30363d",
-                  padding: 14, marginBottom: 8,
-                }}
-              >
                 <View style={{
-                  width: 10, height: 10, borderRadius: 5, flexShrink: 0,
-                  backgroundColor:
-                    agent.status === "active"
-                      ? "#3fb950"
-                      : agent.status === "suspended"
-                        ? "#f85149"
-                        : "#484f58",
-                }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: "#e6edf3", fontSize: 14, fontWeight: "600" }}>{agent.name}</Text>
-                  <Text style={{ color: "#6e7681", fontSize: 11, marginTop: 2 }}>
-                    {agent.sessions?.filter((s) => s.isActive).length ?? 0} active session
-                    {(agent.sessions?.filter((s) => s.isActive).length ?? 0) !== 1 ? "s" : ""}
+                  backgroundColor: "rgba(0,0,0,0.2)",
+                  paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20
+                }}>
+                  <Text style={{ color: "#FFF", fontSize: 12, fontWeight: "700" }}>
+                    {walletInfo?.isLocked ? "LOCKED" : (walletInfo?.onChain ? "ACTIVE" : "UNINITIALIZED")}
                   </Text>
                 </View>
-                <Text style={{ color: "#484f58", fontSize: 18, lineHeight: 22 }}>›</Text>
-              </Pressable>
-            ))
-          )}
-        </View>
-
-        {/* ── Recent Activity ── */}
-        <View>
-          <View style={{
-            flexDirection: "row", alignItems: "center",
-            justifyContent: "space-between", marginBottom: 10,
-          }}>
-            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "700" }}>Recent Activity</Text>
-            <Pressable onPress={() => router.push("/(tabs)/activity")}>
-              <Text style={{ color: "#58a6ff", fontSize: 12, fontWeight: "600" }}>View All →</Text>
-            </Pressable>
-          </View>
-
-          <View style={{
-            backgroundColor: "#161b22", borderRadius: 6,
-            borderWidth: 1, borderColor: "#30363d",
-            overflow: "hidden",
-          }}>
-            {activity.length === 0 ? (
-              <View style={{ padding: 24, alignItems: "center" }}>
-                <Text style={{ color: "#484f58", fontSize: 13 }}>No activity yet</Text>
               </View>
-            ) : (
-              activity.slice(0, 5).map((item, i) => (
-                <View
-                  key={item.id}
+
+              <Text style={{ color: "#FFFFFF", fontSize: 36, fontWeight: "800", letterSpacing: -1, marginBottom: 4 }}>
+                {balance.toFixed(4)} <Text style={{ fontSize: 18, color: "rgba(255,255,255,0.7)" }}>SOL</Text>
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, fontFamily: "SpaceMono", marginBottom: 8 }}>
+                {sealWalletAddress ? short(sealWalletAddress) : "—"}
+              </Text>
+
+              <View style={{ flexDirection: "row", gap: 12, marginTop: 24 }}>
+                <Pressable
+                  onPress={() => sealWalletAddress && copyToClipboard(sealWalletAddress, "Wallet Address")}
                   style={{
-                    flexDirection: "row", alignItems: "center", gap: 12,
-                    paddingHorizontal: 16, paddingVertical: 12,
-                    borderTopWidth: i === 0 ? 0 : 1, borderTopColor: "#30363d",
+                    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+                    backgroundColor: "rgba(0,0,0,0.15)", borderRadius: 8, paddingVertical: 12
                   }}
                 >
-                  <View style={{
-                    width: 8, height: 8, borderRadius: 4, flexShrink: 0,
-                    backgroundColor: ACTIVITY_COLORS[item.action] ?? "#484f58",
-                  }} />
-                  <Text style={{ color: "#8b949e", fontSize: 13, flex: 1 }}>
-                    {ACTIVITY_LABELS[item.action] ?? item.action}
-                    {item.agent ? (
-                      <Text style={{ color: "#6e7681" }}> · {item.agent.name}</Text>
-                    ) : null}
-                  </Text>
-                  <Text style={{ color: "#484f58", fontSize: 11 }}>{formatTime(item.createdAt)}</Text>
-                </View>
-              ))
+                  <Copy size={16} color="#FFF" />
+                  <Text style={{ color: "#FFF", fontSize: 14, fontWeight: "600" }}>Copy Address</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    sealWalletAddress && copyToClipboard(sealWalletAddress, "Address");
+                    Alert.alert("Funding", "Please send SOL directly to your copied Smart Wallet PDA to fund your agents.");
+                  }}
+                  style={{
+                    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+                    backgroundColor: "#FFFFFF", borderRadius: 8, paddingVertical: 12
+                  }}
+                >
+                  <Download size={16} color="#FF4500" />
+                  <Text style={{ color: "#FF4500", fontSize: 14, fontWeight: "600" }}>Fund Wallet</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Quick Actions */}
+            <View style={{ flexDirection: "row", gap: 12, marginBottom: 30 }}>
+              <Pressable
+                onPress={handleToggleLock}
+                disabled={togglingLock || !walletInfo?.onChain}
+                style={{
+                  flex: 1, padding: 16, borderRadius: 12,
+                  backgroundColor: "#111111", borderWidth: 1, borderColor: walletInfo?.isLocked ? "#3fb950" : "#222222",
+                  alignItems: "center"
+                }}
+              >
+                {walletInfo?.isLocked ? <Unlock size={24} color="#3fb950" /> : <Lock size={24} color="#888888" />}
+                <Text style={{ color: walletInfo?.isLocked ? "#3fb950" : "#888888", fontSize: 13, fontWeight: "600", marginTop: 8 }}>
+                  {togglingLock ? "..." : (walletInfo?.isLocked ? "Unlock Access" : "Lock Wallet")}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleRevokeAll}
+                disabled={revoking}
+                style={{
+                  flex: 1, padding: 16, borderRadius: 12,
+                  backgroundColor: "#111111", borderWidth: 1, borderColor: "#222222",
+                  alignItems: "center"
+                }}
+              >
+                <ShieldAlert size={24} color="#f85149" />
+                <Text style={{ color: "#f85149", fontSize: 13, fontWeight: "600", marginTop: 8 }}>
+                  {revoking ? "..." : "Revoke All"}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Pending Approvals */}
+            {pendingApprovals.length > 0 && (
+              <View style={{ marginBottom: 30 }}>
+                <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "700", marginBottom: 12 }}>Requests</Text>
+                {pendingApprovals.map((req) => (
+                  <View key={req.id} style={{
+                    backgroundColor: "#111111", borderRadius: 12, padding: 16,
+                    borderLeftWidth: 3, borderLeftColor: "#FF4500", marginBottom: 12
+                  }}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                      <View>
+                        <Text style={{ color: "#FFFFFF", fontSize: 15, fontWeight: "600" }}>{req.agent?.name}</Text>
+                        <Text style={{ color: "#888888", fontSize: 13, marginTop: 2 }}>Wants to create a session</Text>
+                      </View>
+                      <Text style={{ color: "#444444", fontSize: 11 }}>Never expires</Text>
+                    </View>
+                    <View style={{ flexDirection: "row", gap: 8 }}>
+                      <Pressable
+                        onPress={() => handleReject(req.id)}
+                        style={{ flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: "rgba(248,81,73,0.1)", alignItems: "center" }}
+                      >
+                        <Text style={{ color: "#f85149", fontSize: 13, fontWeight: "600" }}>Reject</Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => handleApprove(req.id)}
+                        style={{ flex: 1, paddingVertical: 10, borderRadius: 8, backgroundColor: "#FF4500", alignItems: "center" }}
+                      >
+                        <Text style={{ color: "#FFFFFF", fontSize: 13, fontWeight: "600" }}>Approve</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ))}
+              </View>
             )}
+
+            {/* Agents Stats */}
+            <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "700", marginBottom: 12 }}>Overview</Text>
+            <Pressable
+              onPress={() => router.push("/(tabs)/agents")}
+              style={{
+                backgroundColor: "#111111", borderRadius: 12, padding: 20,
+                flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+                marginBottom: 12, borderWidth: 1, borderColor: "#222222"
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 16 }}>
+                <View style={{ backgroundColor: "rgba(255,69,0,0.1)", padding: 12, borderRadius: 10 }}>
+                  <Bot size={24} color="#FF4500" />
+                </View>
+                <View>
+                  <Text style={{ color: "#FFFFFF", fontSize: 16, fontWeight: "600" }}>Active Agents</Text>
+                  <Text style={{ color: "#888888", fontSize: 13, marginTop: 2 }}>{activeAgents} agent connected</Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#444444" />
+            </Pressable>
+
           </View>
-        </View>
+        </ScrollView>
       </View>
-    </ScrollView>
+    </View>
   );
 }

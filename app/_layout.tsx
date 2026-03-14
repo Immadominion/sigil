@@ -21,12 +21,12 @@ const SigilDarkTheme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    background: "#0B0E17",
-    card: "#141828",
-    border: "#1E2640",
-    primary: "#5B7FFF",
-    text: "#F1F5F9",
-    notification: "#EF4444",
+    background: "#050505",
+    card: "#111111",
+    border: "#222222",
+    primary: "#FF4500",
+    text: "#F5F5F5",
+    notification: "#f85149",
   },
 };
 
@@ -76,8 +76,8 @@ function RootLayoutNav() {
   // Don't render any screens until auth state is resolved
   if (isLoading) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#0B0E17", alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator size="large" color="#5B7FFF" />
+      <View style={{ flex: 1, backgroundColor: "#050505", alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color="#FF4500" />
       </View>
     );
   }
@@ -92,8 +92,8 @@ function RootLayoutNav() {
           options={{
             headerShown: true,
             headerTitle: "Agent Details",
-            headerStyle: { backgroundColor: "#141828" },
-            headerTintColor: "#F1F5F9",
+            headerStyle: { backgroundColor: "#111111" },
+            headerTintColor: "#F5F5F5",
             presentation: "card",
           }}
         />

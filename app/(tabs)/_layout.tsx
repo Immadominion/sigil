@@ -1,16 +1,16 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { ShieldCheck, Bot, Activity } from "lucide-react-native";
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#5B7FFF",
-        tabBarInactiveTintColor: "#64748B",
+        tabBarActiveTintColor: "#FF4500",
+        tabBarInactiveTintColor: "#888888",
         tabBarStyle: {
-          backgroundColor: "#141828",
-          borderTopColor: "#1E2640",
+          backgroundColor: "#111111",
+          borderTopColor: "#222222",
           borderTopWidth: 1,
         },
         headerShown: false,
@@ -21,7 +21,7 @@ export default function TabLayout() {
         options={{
           title: "Dashboard",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="shield-checkmark" size={size} color={color} />
+            <ShieldCheck size={size} color={color} />
           ),
         }}
       />
@@ -30,7 +30,7 @@ export default function TabLayout() {
         options={{
           title: "Agents",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
+            <Bot size={size} color={color} />
           ),
         }}
       />
@@ -39,7 +39,7 @@ export default function TabLayout() {
         options={{
           title: "Activity",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="time" size={size} color={color} />
+            <Activity size={size} color={color} />
           ),
         }}
       />

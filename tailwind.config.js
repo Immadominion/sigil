@@ -9,17 +9,21 @@ module.exports = {
     extend: {
       colors: {
         sigil: {
-          bg: "#0d1117",
-          surface: "#161b22",
-          border: "#30363d",
-          accent: "#58a6ff",
-          "accent-light": "#58a6ff",
+          bg: "#050505",
+          surface: "#111111",
+          border: "#222222",
+          accent: "#FF4500",
+          "accent-light": "#FF5c19",
           success: "#3fb950",
           warning: "#d29922",
           danger: "#f85149",
-          muted: "#8b949e",
+          muted: "#888888",
+          text: "#F5F5F5"
         },
       },
+      fontFamily: {
+        mono: ['SpaceMono']
+      }
     },
   },
   plugins: [],

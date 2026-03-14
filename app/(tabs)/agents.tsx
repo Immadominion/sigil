@@ -140,10 +140,10 @@ export default function AgentsScreen() {
   const short = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: "#0d1117" }}
+    <ScrollView contentContainerStyle={{ maxWidth: 640, width: "100%", alignSelf: "center", paddingBottom: 40 }}
+      style={{ flex: 1, backgroundColor: "#050505" }}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#58a6ff" />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF4500" />
       }
       showsVerticalScrollIndicator={false}
     >
@@ -154,7 +154,7 @@ export default function AgentsScreen() {
           <Pressable
             onPress={() => setShowCreate(true)}
             style={{
-              backgroundColor: "#58a6ff", borderRadius: 6,
+              backgroundColor: "#FF4500", borderRadius: 6,
               paddingVertical: 14, alignItems: "center", marginBottom: 20,
             }}
           >
@@ -162,8 +162,8 @@ export default function AgentsScreen() {
           </Pressable>
         ) : (
           <View style={{
-            backgroundColor: "#161b22", borderRadius: 6,
-            borderWidth: 1, borderColor: "#30363d",
+            backgroundColor: "#111111", borderRadius: 6,
+            borderWidth: 1, borderColor: "#222222",
             padding: 18, marginBottom: 20,
           }}>
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15, marginBottom: 14 }}>New Agent</Text>
@@ -171,10 +171,10 @@ export default function AgentsScreen() {
               value={newName}
               onChangeText={setNewName}
               placeholder="e.g., LP Trading Bot"
-              placeholderTextColor="#484f58"
+              placeholderTextColor="#444444"
               style={{
-                backgroundColor: "#0d1117",
-                borderWidth: 1, borderColor: "#30363d",
+                backgroundColor: "#050505",
+                borderWidth: 1, borderColor: "#222222",
                 borderRadius: 6, paddingHorizontal: 16, paddingVertical: 12,
                 color: "#fff", fontSize: 15, marginBottom: 12,
               }}
@@ -187,19 +187,19 @@ export default function AgentsScreen() {
               onPress={() => setAutoApprove(!autoApprove)}
               style={{
                 flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-                backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                backgroundColor: "#050505", borderWidth: 1, borderColor: "#222222",
                 borderRadius: 6, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12,
               }}
             >
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "#e6edf3", fontSize: 14, fontWeight: "600" }}>Auto-approve sessions</Text>
+                <Text style={{ color: "#F5F5F5", fontSize: 14, fontWeight: "600" }}>Auto-approve sessions</Text>
                 <Text style={{ color: "#6e7681", fontSize: 11, marginTop: 2 }}>
                   {autoApprove ? "Agent gets sessions instantly — no manual approval" : "You must approve each session request in this app"}
                 </Text>
               </View>
               <View style={{
                 width: 44, height: 24, borderRadius: 12,
-                backgroundColor: autoApprove ? "#3fb950" : "#30363d",
+                backgroundColor: autoApprove ? "#3fb950" : "#222222",
                 justifyContent: "center",
                 paddingHorizontal: 2,
               }}>
@@ -214,30 +214,30 @@ export default function AgentsScreen() {
             {/* Spending limits */}
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "#8b949e", fontSize: 11, marginBottom: 4, fontWeight: "600" }}>Daily Limit (SOL)</Text>
+                <Text style={{ color: "#888888", fontSize: 11, marginBottom: 4, fontWeight: "600" }}>Daily Limit (SOL)</Text>
                 <TextInput
                   value={dailyLimit}
                   onChangeText={setDailyLimit}
                   placeholder="5"
-                  placeholderTextColor="#484f58"
+                  placeholderTextColor="#444444"
                   keyboardType="decimal-pad"
                   style={{
-                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    backgroundColor: "#050505", borderWidth: 1, borderColor: "#222222",
                     borderRadius: 6, paddingHorizontal: 16, paddingVertical: 12,
                     color: "#fff", fontSize: 15,
                   }}
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "#8b949e", fontSize: 11, marginBottom: 4, fontWeight: "600" }}>Per TX Limit (SOL)</Text>
+                <Text style={{ color: "#888888", fontSize: 11, marginBottom: 4, fontWeight: "600" }}>Per TX Limit (SOL)</Text>
                 <TextInput
                   value={perTxLimit}
                   onChangeText={setPerTxLimit}
                   placeholder="1"
-                  placeholderTextColor="#484f58"
+                  placeholderTextColor="#444444"
                   keyboardType="decimal-pad"
                   style={{
-                    backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d",
+                    backgroundColor: "#050505", borderWidth: 1, borderColor: "#222222",
                     borderRadius: 6, paddingHorizontal: 16, paddingVertical: 12,
                     color: "#fff", fontSize: 15,
                   }}
@@ -250,17 +250,17 @@ export default function AgentsScreen() {
                 onPress={() => { setShowCreate(false); setNewName(""); setAutoApprove(true); setDailyLimit("5"); setPerTxLimit("1"); }}
                 style={{
                   flex: 1, paddingVertical: 11, borderRadius: 6,
-                  alignItems: "center", borderWidth: 1, borderColor: "#30363d",
+                  alignItems: "center", borderWidth: 1, borderColor: "#222222",
                 }}
               >
-                <Text style={{ color: "#8b949e", fontWeight: "600" }}>Cancel</Text>
+                <Text style={{ color: "#888888", fontWeight: "600" }}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={handleCreate}
                 disabled={creating || !newName.trim()}
                 style={{
                   flex: 1, paddingVertical: 11, borderRadius: 6, alignItems: "center",
-                  backgroundColor: creating || !newName.trim() ? "rgba(88,166,255,0.4)" : "#58a6ff",
+                  backgroundColor: creating || !newName.trim() ? "rgba(88,166,255,0.4)" : "#FF4500",
                 }}
               >
                 {creating ? (
@@ -277,10 +277,10 @@ export default function AgentsScreen() {
         {agents.length === 0 ? (
           <View style={{ alignItems: "center", paddingVertical: 60 }}>
             <Text style={{ fontSize: 42, marginBottom: 14 }}>🤖</Text>
-            <Text style={{ color: "#8b949e", fontSize: 15, fontWeight: "600", marginBottom: 6 }}>
+            <Text style={{ color: "#888888", fontSize: 15, fontWeight: "600", marginBottom: 6 }}>
               No agents yet
             </Text>
-            <Text style={{ color: "#484f58", fontSize: 13, textAlign: "center" }}>
+            <Text style={{ color: "#444444", fontSize: 13, textAlign: "center" }}>
               Register your first agent to start{"\n"}delegating trading authority
             </Text>
           </View>
@@ -290,21 +290,21 @@ export default function AgentsScreen() {
               key={agent.id}
               onPress={() => router.push(`/agent/${agent.id}`)}
               style={{
-                backgroundColor: "#161b22", borderRadius: 6,
-                borderWidth: 1, borderColor: "#30363d",
+                backgroundColor: "#111111", borderRadius: 6,
+                borderWidth: 1, borderColor: "#222222",
                 padding: 16, marginBottom: 10,
               }}
             >
               {/* Row 1: name + status badge */}
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <Text style={{ color: "#e6edf3", fontSize: 15, fontWeight: "700", flex: 1 }}>{agent.name}</Text>
+                <Text style={{ color: "#F5F5F5", fontSize: 15, fontWeight: "700", flex: 1 }}>{agent.name}</Text>
                 <View style={{
                   paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6,
                   backgroundColor: STATUS_BG[agent.status] ?? "rgba(100,116,139,0.12)",
                 }}>
                   <Text style={{
                     fontSize: 11, fontWeight: "600", textTransform: "capitalize",
-                    color: STATUS_COLOR[agent.status] ?? "#8b949e",
+                    color: STATUS_COLOR[agent.status] ?? "#888888",
                   }}>
                     {agent.status}
                   </Text>
@@ -312,7 +312,7 @@ export default function AgentsScreen() {
               </View>
 
               {/* Row 2: pubkey */}
-              <Text style={{ color: "#484f58", fontSize: 11, fontFamily: "SpaceMono", marginBottom: 10 }}>
+              <Text style={{ color: "#444444", fontSize: 11, fontFamily: "SpaceMono", marginBottom: 10 }}>
                 {short(agent.agentPubkey)}
               </Text>
 
@@ -320,19 +320,19 @@ export default function AgentsScreen() {
               <View style={{ flexDirection: "row", gap: 16 }}>
                 <View>
                   <Text style={{ color: "#6e7681", fontSize: 10, marginBottom: 2 }}>Sessions</Text>
-                  <Text style={{ color: "#8b949e", fontSize: 13, fontWeight: "600" }}>
+                  <Text style={{ color: "#888888", fontSize: 13, fontWeight: "600" }}>
                     {agent.sessions?.filter((s) => s.isActive).length ?? 0} active
                   </Text>
                 </View>
                 <View>
                   <Text style={{ color: "#6e7681", fontSize: 10, marginBottom: 2 }}>Daily Limit</Text>
-                  <Text style={{ color: "#8b949e", fontSize: 13, fontWeight: "600" }}>
+                  <Text style={{ color: "#888888", fontSize: 13, fontWeight: "600" }}>
                     {(Number(agent.dailyLimitLamports) / 1e9).toFixed(1)} SOL
                   </Text>
                 </View>
                 <View>
                   <Text style={{ color: "#6e7681", fontSize: 10, marginBottom: 2 }}>Per Tx</Text>
-                  <Text style={{ color: "#8b949e", fontSize: 13, fontWeight: "600" }}>
+                  <Text style={{ color: "#888888", fontSize: 13, fontWeight: "600" }}>
                     {(Number(agent.perTxLimitLamports) / 1e9).toFixed(2)} SOL
                   </Text>
                 </View>

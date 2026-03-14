@@ -7,9 +7,9 @@ import {
   Alert,
   Platform,
   ScrollView,
-  Image,
   TextInput,
   KeyboardAvoidingView,
+  Image,
 } from "react-native";
 import { Buffer } from "buffer";
 import * as Linking from "expo-linking";
