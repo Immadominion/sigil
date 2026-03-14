@@ -9,6 +9,7 @@ interface AuthState {
   walletAddress: string | null;
   sealWalletAddress: string | null;
   walletId: number | null;
+  walletProviderId: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 
@@ -17,6 +18,7 @@ interface AuthState {
     walletAddress: string;
     sealWalletAddress: string;
     walletId: number;
+    walletProviderId?: string | null;
   }) => Promise<void>;
   loadStoredAuth: () => Promise<void>;
   logout: () => Promise<void>;
@@ -51,6 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   walletAddress: null,
   sealWalletAddress: null,
   walletId: null,
+  walletProviderId: null,
   isAuthenticated: false,
   isLoading: true,
 
@@ -60,12 +63,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     await secureSet("sigil_wallet", data.walletAddress);
     await secureSet("sigil_seal_wallet", data.sealWalletAddress);
     await secureSet("sigil_wallet_id", data.walletId.toString());
+    if (data.walletProviderId) await secureSet("sigil_wallet_provider_id", data.walletProviderId);
+    else await secureDelete("sigil_wallet_provider_id");
 
     set({
       token: data.token,
       walletAddress: data.walletAddress,
       sealWalletAddress: data.sealWalletAddress,
       walletId: data.walletId,
+      walletProviderId: data.walletProviderId ?? null,
       isAuthenticated: true,
       isLoading: false,
     });
@@ -77,6 +83,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const walletAddress = await secureGet("sigil_wallet");
       const sealWalletAddress = await secureGet("sigil_seal_wallet");
       const walletIdStr = await secureGet("sigil_wallet_id");
+      const walletProviderId = await secureGet("sigil_wallet_provider_id");
 
       if (token && walletAddress && sealWalletAddress && walletIdStr) {
         api.setToken(token);
@@ -85,6 +92,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           walletAddress,
           sealWalletAddress,
           walletId: parseInt(walletIdStr),
+          walletProviderId,
           isAuthenticated: true,
           isLoading: false,
         });
@@ -102,12 +110,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     await secureDelete("sigil_wallet");
     await secureDelete("sigil_seal_wallet");
     await secureDelete("sigil_wallet_id");
+    await secureDelete("sigil_wallet_provider_id");
 
     set({
       token: null,
       walletAddress: null,
       sealWalletAddress: null,
       walletId: null,
+      walletProviderId: null,
       isAuthenticated: false,
       isLoading: false,
     });

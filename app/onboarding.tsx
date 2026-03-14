@@ -26,6 +26,7 @@ import { useAuthStore } from "../stores/auth";
 import { api } from "../lib/api";
 import { buildCreateWalletInstruction, deriveWalletPda } from "../lib/seal";
 import { APP_NAME, SOLANA_CLUSTER, SOLANA_RPC_URL } from "../lib/constants";
+import { getInjectedWebWalletProvider, getWebWalletProviderId } from "../lib/web-wallet";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -38,6 +39,7 @@ interface ConnectedWallet {
   walletAddress: string;
   sealWalletAddress: string;
   walletId: number;
+  walletProviderId?: string | null;
   sendTx: (tx: Transaction) => Promise<string>;
 }
 
@@ -202,6 +204,7 @@ export default function Onboarding() {
             walletAddress: result.wallet.ownerAddress,
             sealWalletAddress: result.wallet.sealWalletAddress,
             walletId: result.wallet.id,
+            walletProviderId: null,
             sendTx: iosSendTx,
           };
           await handlePostConnect(connected);
@@ -340,6 +343,7 @@ export default function Onboarding() {
           walletAddress: result.wallet.ownerAddress,
           sealWalletAddress: result.wallet.sealWalletAddress,
           walletId: result.wallet.id,
+          walletProviderId: null,
           sendTx: androidSendTx,
         };
         await handlePostConnect(connected);
@@ -854,6 +858,7 @@ async function detectWebWallets(): Promise<DetectedWallet[]> {
             walletAddress: result.wallet.ownerAddress,
             sealWalletAddress: result.wallet.sealWalletAddress,
             walletId: result.wallet.id,
+            walletProviderId: getWebWalletProviderId(wallet.name),
             sendTx,
           };
         },
@@ -904,6 +909,7 @@ async function detectWebWallets(): Promise<DetectedWallet[]> {
           walletAddress: result.wallet.ownerAddress,
           sealWalletAddress: result.wallet.sealWalletAddress,
           walletId: result.wallet.id,
+          walletProviderId: getWebWalletProviderId(name),
           sendTx,
         };
       },
@@ -919,10 +925,5 @@ async function detectWebWallets(): Promise<DetectedWallet[]> {
  * that standard:connect does NOT grant. Using the legacy provider avoids this.
  */
 function getLegacyProvider(walletName: string): any {
-  if (typeof window === "undefined") return null;
-  const n = walletName.toLowerCase();
-  if (n.includes("phantom")) return (window as any).phantom?.solana;
-  if (n.includes("solflare")) return (window as any).solflare;
-  if (n.includes("backpack")) return (window as any).xnft?.solana ?? (window as any).backpack;
-  return (window as any).solana ?? null; // universal fallback
+  return getInjectedWebWalletProvider(getWebWalletProviderId(walletName));
 }

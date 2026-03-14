@@ -15,6 +15,7 @@ import { PublicKey } from "@solana/web3.js";
 import { api, type Agent } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth";
 import { buildRegisterAgentTransaction } from "../../lib/seal";
+import { getInjectedWebWalletProvider } from "../../lib/web-wallet";
 
 const STATUS_COLOR: Record<string, string> = {
   active: "#3fb950",
@@ -70,9 +71,10 @@ export default function AgentsScreen() {
       });
 
       // Try on-chain registration — non-blocking if it fails
-      const ownerAddress = useAuthStore.getState().walletAddress;
+      const { walletAddress, walletProviderId } = useAuthStore.getState();
+      const ownerAddress = walletAddress;
       if (ownerAddress && agent.agentPubkey) {
-        registerAgentOnChain(ownerAddress, agent).catch((e) =>
+        registerAgentOnChain(ownerAddress, agent, walletProviderId).catch((e) =>
           console.warn("On-chain registration failed (can retry later):", e)
         );
       }
@@ -90,7 +92,11 @@ export default function AgentsScreen() {
     }
   };
 
-  const registerAgentOnChain = async (ownerAddress: string, agent: any) => {
+  const registerAgentOnChain = async (
+    ownerAddress: string,
+    agent: any,
+    walletProviderId: string | null,
+  ) => {
     const owner = new PublicKey(ownerAddress);
     const agentPubkey = new PublicKey(agent.agentPubkey);
     const LAMPORTS = BigInt(1_000_000_000);
@@ -104,12 +110,10 @@ export default function AgentsScreen() {
     });
 
     if (Platform.OS === "web") {
-      const provider =
-        (window as any).phantom?.solana ??
-        (window as any).solflare ??
-        (window as any).solana;
-      if (!provider) throw new Error("No wallet provider");
-      // Ensure wallet is connected (may have disconnected since onboarding)
+      const provider = getInjectedWebWalletProvider(walletProviderId);
+      if (!provider) {
+        throw new Error("Selected wallet provider is unavailable. Reconnect the same wallet and try again.");
+      }
       if (!provider.isConnected) await provider.connect();
       await provider.signAndSendTransaction(tx);
     } else {
