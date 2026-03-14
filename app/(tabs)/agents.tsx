@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { api, type Agent } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth";
 import { buildRegisterAgentTransaction } from "../../lib/seal";
@@ -101,12 +101,16 @@ export default function AgentsScreen() {
     const agentPubkey = new PublicKey(agent.agentPubkey);
     const LAMPORTS = BigInt(1_000_000_000);
 
+    // Fund agent keypair with 0.05 SOL so it can pay for session creation rent + fees
+    const AGENT_FUNDING = BigInt(Math.round(0.05 * Number(LAMPORTS)));
+
     const tx = await buildRegisterAgentTransaction({
       owner,
       agentPubkey,
       name: agent.name,
       dailyLimitLamports: BigInt(agent.dailyLimitLamports ?? 5n * LAMPORTS),
       perTxLimitLamports: BigInt(agent.perTxLimitLamports ?? 1n * LAMPORTS),
+      agentFundingLamports: AGENT_FUNDING,
     });
 
     if (Platform.OS === "web") {

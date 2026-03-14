@@ -209,6 +209,8 @@ export function buildRegisterAgentInstruction(params: {
 
 /**
  * Build a serialized transaction for RegisterAgent that can be signed by a wallet.
+ * Optionally bundles a SystemProgram.transfer to fund the agent keypair
+ * so it has SOL to pay for future session creation rent + tx fees.
  */
 export async function buildRegisterAgentTransaction(params: {
     owner: PublicKey;
@@ -220,12 +222,25 @@ export async function buildRegisterAgentTransaction(params: {
     allowedInstructions?: Buffer[];
     defaultSessionDuration?: bigint;
     maxSessionDuration?: bigint;
+    agentFundingLamports?: bigint;
 }): Promise<Transaction> {
     const { Connection } = await import("@solana/web3.js");
     const connection = new Connection(SOLANA_RPC_URL, "confirmed");
 
     const ix = buildRegisterAgentInstruction(params);
     const tx = new Transaction().add(ix);
+
+    // Fund the agent keypair so it can pay for CreateSession rent + fees
+    if (params.agentFundingLamports && params.agentFundingLamports > 0n) {
+        tx.add(
+            SystemProgram.transfer({
+                fromPubkey: params.owner,
+                toPubkey: params.agentPubkey,
+                lamports: Number(params.agentFundingLamports),
+            })
+        );
+    }
+
     tx.feePayer = params.owner;
     tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
